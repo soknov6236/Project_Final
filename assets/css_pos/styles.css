@@ -1,0 +1,735 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+/* Header Styles */
+.dark-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #1a1a1a; /* Slightly lighter dark shade */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo Styles */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo img {
+    height: 40px;
+    width: auto;
+}
+
+.logo span {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+/* Navigation Links */
+.nav-links ul {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+}
+
+.nav-links ul li a {
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.nav-links ul li a:hover {
+    color: #ff6347; /* Accent color on hover */
+}
+
+/* Header Actions (Buttons) */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cta-button {
+    background-color: #ff6347; /* Accent color */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background-color: #e5533d; /* Darker shade on hover */
+}
+
+.theme-toggle {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: #ffffff;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: rotate(180deg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dark-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    .nav-links ul {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .header-actions {
+        margin-top: 15px;
+    }
+}
+
+/* Light Theme Styles */
+body.light-theme {
+    background-color: #f5f5f5;
+    color: #333333;
+}
+
+.light-header {
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.light-header .logo span {
+    color: #ff6347; /* Keep the accent color */
+}
+
+.light-header .nav-links ul li a {
+    color: #333333;
+}
+
+.light-header .nav-links ul li a:hover {
+    color: #ff6347; /* Accent color on hover */
+}
+
+.light-header .theme-toggle {
+    color: #333333;
+}
+
+/* Hero Section Styles */
+.hero-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 60px 40px;
+    background-color: #1a1a1a; /* Dark background */
+    color: #ffffff; /* Light text */
+    gap: 40px;
+}
+
+.hero-content {
+    max-width: 600px;
+}
+
+.hero-content h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+.hero-content p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.hero-buttons .cta-button {
+    background-color: #ff6347; /* Accent color */
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.hero-buttons .cta-button.secondary {
+    background-color: transparent;
+    border: 2px solid #ff6347;
+    color: #ff6347;
+}
+
+.hero-buttons .cta-button:hover {
+    background-color: #e5533d; /* Darker shade on hover */
+}
+
+.hero-buttons .cta-button.secondary:hover {
+    background-color: #ff6347;
+    color: #ffffff;
+}
+
+.hero-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Footer Styles */
+.dark-footer {
+    background-color: #1a1a1a; /* Dark background */
+    color: #ffffff; /* Light text */
+    padding: 40px 20px;
+    border-top: 2px solid #ff6347; /* Accent color border */
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-section {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 20px;
+}
+
+.footer-section h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #ff6347; /* Accent color */
+}
+
+.footer-section p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cccccc; /* Light gray for text */
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-section ul li {
+    margin-bottom: 10px;
+}
+
+.footer-section ul li a {
+    text-decoration: none;
+    color: #cccccc; /* Light gray for links */
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+    color: #ff6347; /* Accent color on hover */
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons .social-icon img {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+}
+
+.social-icons .social-icon:hover img {
+    transform: scale(1.2);
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #333333; /* Light border for separation */
+}
+
+.footer-bottom p {
+    font-size: 14px;
+    color: #cccccc; /* Light gray for text */
+    margin: 5px 0;
+}
+
+.footer-bottom a {
+    color: #cccccc; /* Light gray for links */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-bottom a:hover {
+    color: #ff6347; /* Accent color on hover */
+}
+
+/* Responsive Design for Footer */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-section {
+        max-width: 300px;
+    }
+
+    .social-icons {
+        justify-content: center;
+    }
+}
+
+/* Responsive Design for Hero Section */
+@media (max-width: 768px) {
+    .hero-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .hero-content h1 {
+        font-size: 36px;
+    }
+
+    .hero-content p {
+        font-size: 16px;
+    }
+
+    .hero-buttons {
+        justify-content: center;
+    }
+
+    .hero-image img {
+        margin-top: 20px;
+    }
+}
+
+/* Featured Section Styles */
+.featured-section {
+    padding: 60px 40px;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    text-align: center;
+}
+
+.featured-section h2 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+.featured-section p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: #cccccc; /* Light gray for subtext */
+}
+
+.pizza-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.pizza-card {
+    background-color: #1a1a1a; /* Slightly lighter dark shade */
+    border-radius: 10px;
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pizza-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.pizza-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.pizza-card h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Accent color */
+}
+
+.pizza-card p {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #cccccc; /* Light gray for description */
+}
+
+.pizza-card .price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.pizza-card .cta-button {
+    background-color: #ff6347; /* Accent color */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.pizza-card .cta-button:hover {
+    background-color: #e5533d; /* Darker shade on hover */
+}
+
+/* Responsive Design for Featured Section */
+@media (max-width: 768px) {
+    .pizza-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pizza-card {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* More View Section Styles */
+.more-view-section {
+    padding: 60px 40px;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    text-align: center;
+}
+
+.more-view-section h2 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+.more-view-section p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: #cccccc; /* Light gray for subtext */
+}
+
+.more-view-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.more-view-card {
+    background-color: #1a1a1a; /* Slightly lighter dark shade */
+    border-radius: 10px;
+    overflow: hidden;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.more-view-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.more-view-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.more-view-card .card-content {
+    padding: 20px;
+}
+
+.more-view-card h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Accent color */
+}
+
+.more-view-card p {
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #cccccc; /* Light gray for description */
+}
+
+.more-view-card .cta-button {
+    background-color: #ff6347; /* Accent color */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.more-view-card .cta-button:hover {
+    background-color: #e5533d; /* Darker shade on hover */
+}
+
+/* Responsive Design for More View Section */
+@media (max-width: 768px) {
+    .more-view-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .more-view-card {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* Menu Section Styles */
+.menu-section {
+    padding: 60px 40px;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    text-align: center;
+}
+
+.menu-section h2 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+.menu-section p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: #cccccc; /* Light gray for subtext */
+}
+
+.menu-category {
+    margin-bottom: 40px;
+}
+
+.menu-category h3 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #ff6347; /* Accent color */
+}
+
+.menu-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.menu-item {
+    background-color: #1a1a1a; /* Slightly lighter dark shade */
+    border-radius: 10px;
+    overflow: hidden;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menu-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.menu-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.menu-item .item-details {
+    padding: 20px;
+}
+
+.menu-item h4 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Accent color */
+}
+
+.menu-item p {
+    font-size: 14px;
+    margin-bottom: 15px;
+    color: #cccccc; /* Light gray for description */
+}
+
+.menu-item .price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    display: block;
+    margin-bottom: 15px;
+}
+
+/* Responsive Design for Menu Section */
+@media (max-width: 768px) {
+    .menu-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .menu-item {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* About Us Section Styles */
+.about-section {
+    padding: 60px 40px;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    text-align: center;
+}
+
+.about-section h2 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Pizza-themed accent color */
+}
+
+.about-section p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: #cccccc; /* Light gray for subtext */
+}
+
+.about-category {
+    margin-bottom: 60px;
+}
+
+.about-category h3 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #ff6347; /* Accent color */
+}
+
+.about-content {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    text-align: left;
+}
+
+.about-content img {
+    width: 300px;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.about-text {
+    flex: 1;
+}
+
+.about-text p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #cccccc; /* Light gray for text */
+}
+
+.team-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.team-member {
+    background-color: #1a1a1a; /* Slightly lighter dark shade */
+    border-radius: 10px;
+    padding: 20px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.team-member img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.team-member h4 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff6347; /* Accent color */
+}
+
+.team-member p {
+    font-size: 14px;
+    color: #cccccc; /* Light gray for text */
+}
+
+/* Responsive Design for About Us Section */
+@media (max-width: 768px) {
+    .about-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .about-content img {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .team-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+}
