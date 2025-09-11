@@ -8,7 +8,7 @@ $query = "SELECT s.id, s.invoice_number, s.date, s.total, s.tax, s.discount,
           LEFT JOIN customers c ON s.customer_id = c.id
           WHERE s.date BETWEEN ? AND ?
           ORDER BY s.date DESC";
-
+ 
 $stmt = mysqli_prepare($conn, $query);
 $end_date_full = $end_date . ' 23:59:59'; // Include full end day
 mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date_full);

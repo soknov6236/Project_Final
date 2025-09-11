@@ -21,8 +21,8 @@ $query = "SELECT product_id, product_code, name, stock_quantity FROM products WH
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, 'i', $product_id);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt); // This line was missing
-$product = mysqli_fetch_assoc($result); // Now using $result instead of $stmt
+$result = mysqli_stmt_get_result($stmt);
+$product = mysqli_fetch_assoc($result);
 
 if (!$product) {
     $_SESSION['error_message'] = "Product not found";
@@ -41,34 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (empty($errors)) {
         $quantity = intval($_POST['quantity']);
-        $notes = isset($_POST['notes']) ? mysqli_real_escape_string($conn, $_POST['notes']) : null;
         
-        // Start transaction
-        mysqli_begin_transaction($conn);
+        // Update product stock without transaction (simpler approach)
+        $update_query = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE product_id = ?";
+        $stmt = mysqli_prepare($conn, $update_query);
+        mysqli_stmt_bind_param($stmt, 'ii', $quantity, $product_id);
         
-        try {
-            // Update product stock
-            $update_query = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE product_id = ?";
-            $stmt = mysqli_prepare($conn, $update_query);
-            mysqli_stmt_bind_param($stmt, 'ii', $quantity, $product_id);
-            mysqli_stmt_execute($stmt);
-            
-            // Record in inventory log
-            $log_query = "INSERT INTO inventory_log (product_id, quantity_change, notes, created_at) 
-                          VALUES (?, ?, ?, NOW())";
-            $stmt = mysqli_prepare($conn, $log_query);
-            mysqli_stmt_bind_param($stmt, 'iis', $product_id, $quantity, $notes);
-            mysqli_stmt_execute($stmt);
-            
-            // Commit transaction
-            mysqli_commit($conn);
-            
+        if (mysqli_stmt_execute($stmt)) {
             $_SESSION['success_message'] = "Successfully added $quantity units to stock";
             header("Location: products_stock.php");
             exit();
-        } catch (Exception $e) {
-            // Rollback on error
-            mysqli_rollback($conn);
+        } else {
             $errors['database'] = "Error updating stock: " . mysqli_error($conn);
         }
     }
@@ -144,7 +127,7 @@ include('include/topbar.php');
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label for="notes" class="form-label">Notes</label>
+                                        <label for="notes" class="form-label">Notes (Optional)</label>
                                         <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Optional notes about this restock"></textarea>
                                     </div>
                                     

@@ -112,6 +112,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="assets/css/style.css" id="main-style-link" />
   </head>
   <!-- [Head] end -->
+       <script>
+      // Function to get theme from localStorage or default to light
+      function getStoredTheme() {
+        return localStorage.getItem('theme') || 'light';
+      }
+      
+      // Function to set theme in localStorage
+      function setStoredTheme(theme) {
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Apply theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = getStoredTheme();
+        document.documentElement.setAttribute('data-pc-theme', savedTheme);
+        
+        // Update the theme icon in the header
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', savedTheme === 'dark' ? 'moon' : 'sun');
+        }
+      });
+    </script>
   <!-- [Body] Start -->
 
   <body>
@@ -136,7 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="card sm:my-12  w-full shadow-none">
               <div class="card-body !p-10">
                 <div class="text-center mb-8">
-                  <a href="#"><img src="assets/images/logo_report.png" alt="img" width=100px;/></a>
+                  <a href="#"><img src="assets/images/logo_nisai.png" alt="img" /></a>
                 </div>
                 
                 <?php if (isset($_GET['registration']) && $_GET['registration'] === 'success'): ?>
@@ -163,7 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       <label class="form-check-label text-muted" for="customCheckc1">Remember me?</label>
                     </div>
                     <h6 class="font-normal text-primary-500 mb-0">
-                      <a href="#"> Forgot Password? </a>
+                      <a href="forgot_password.php"> Forgot Password? </a>
                     </h6>
                   </div>
                   <div class="mt-4 text-center">
@@ -194,12 +217,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script>
-      layout_change('false');
+      // Modified layout_change function to store theme preference
+      function layout_change(theme) {
+        if (theme === 'false') {
+          // Use the current theme if 'false' is passed (default behavior)
+          theme = document.documentElement.getAttribute('data-pc-theme');
+        }
+        setStoredTheme(theme);
+        document.documentElement.setAttribute('data-pc-theme', theme);
+        
+        // Update the theme icon
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', theme === 'dark' ? 'moon' : 'sun');
+          // Re-initialize Feather icons
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }
+      }
+      
+      // Modified layout_change_default function
+      function layout_change_default() {
+        const defaultTheme = 'light'; // Set your default theme here
+        layout_change(defaultTheme);
+      }
+      
+      // Initialize with stored theme
+      const savedTheme = getStoredTheme();
+      layout_change(savedTheme);
+    </script>
+     
+    <script>
       layout_theme_sidebar_change('dark');
+    </script>
+    
+     
+    <script>
       change_box_container('false');
+    </script>
+     
+    <script>
       layout_caption_change('true');
+    </script>
+     
+    <script>
       layout_rtl_change('false');
+    </script>
+     
+    <script>
       preset_change('preset-1');
+    </script>
+     
+    <script>
       main_layout_change('vertical');
     </script>
   </body>

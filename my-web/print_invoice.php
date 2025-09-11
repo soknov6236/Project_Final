@@ -166,6 +166,17 @@ $logo_path = "../assets/images/logo_report_icon.png";
             }
         }
     </style>
+        <script>
+    window.onload = function() {
+        // Print invoice immediately
+        window.print();
+        
+        // Redirect to sales page after 3 seconds
+        setTimeout(function() {
+            window.location.href = 'manage_sale.php';
+        }, 3000);
+    };
+    </script>
 </head>
 <body>
     <div class="invoice-container">
@@ -286,14 +297,5 @@ $logo_path = "../assets/images/logo_report_icon.png";
             <button onclick="window.print()" class="no-print" style="padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Invoice</button>
         </div>
     </div>
-
-    <script>
-        // Auto-print the invoice when opened
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        };
-    </script>
 </body>
 </html>

@@ -9,7 +9,7 @@ $customer_pages = ['customers.php', 'add_new_customer.php', 'edit_customer.php']
 $supplier_pages = ['suppliers.php', 'add_new_suppliers.php', 'edit_supplier.php'];
 $category_pages = ['category.php', 'add_new_category.php', 'edit_category.php'];
 $purchase_pages = ['purchase.php', 'purchase_list.php', 'purchase_history.php'];
-$sale_pages = ['sales.php', 'sale_pos.php', 'manage_sale.php', 'view_sale.php', 'edit_sale.php'];
+$sale_pages = ['sales.php', 'sale_pos.php','add_new_sale.php', 'manage_sale.php', 'view_sale.php', 'edit_sale.php'];
 $return_pages = ['returns.php', 'add_new_returns.php'];
 $report_pages = ['reports/users.php', 'reports/customers.php', 'reports/suppliers.php', 'reports/categories.php', 'reports/products.php', 'reports/sales.php', 'reports/returns.php'];
 
@@ -30,7 +30,7 @@ $is_report_page = in_array($current_page, $report_pages) || str_contains($curren
     <div class="navbar-wrapper">
         <div class="m-header flex items-center py-4 px-6 h-header-height">
             <a href="index.php" class="b-brand flex items-center gap-3">
-                <img src="../assets/images/logo_report_icon.png" class="hidden sm:block h-6 w-6" alt="Company Logo" />
+                <img src="../assets/images/logo_nisai.png"  alt="Company Logo" />
                 <img src="../assets/images/profile.jpg" class="block sm:hidden h-6 w-6 rounded-full object-cover" alt="Company Icon" />
             </a>
         </div>
@@ -163,6 +163,9 @@ $is_report_page = in_array($current_page, $report_pages) || str_contains($curren
                 </a>
                 <ul class="pc-submenu" style="<?= $is_sale_page ? 'display: block;' : '' ?>">
                     <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
+                        <a class="pc-link" href="add_new_sale.php">Add Sale</a>
+                    </li>
+                    <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="sale_pos.php">POS</a>
                     </li>
                     <li class="pc-item <?= $current_page == 'sales.php' ? 'active' : '' ?>">
@@ -202,8 +205,8 @@ $is_report_page = in_array($current_page, $report_pages) || str_contains($curren
                     <li class="pc-item <?= $current_page == 'reports.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="reports.php">Sales Report</a>
                     </li>
-                    <li class="pc-item <?= $current_page == 'reports/inventory.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="reports/inventory.php">Inventory Report</a>
+                    <li class="pc-item <?= $current_page == 'inventory.php' ? 'active' : '' ?>">
+                        <a class="pc-link" href="inventory.php">Inventory Report</a>
                     </li>
                     <li class="pc-item <?= $current_page == 'reports/customers.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="reports/customers.php">Customer Report</a>

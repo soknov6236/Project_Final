@@ -216,7 +216,7 @@ $total_sales = $total_row['total_amount'] ?? 0;
                                                     <div class='btn-group' role='group'>
                                                         <a href='view_sale_mange.php?id=" . $row['id'] . "' class='btn btn-info btn-sm' title='View'><i class='ti ti-eye'></i></a>
                                                         <a href='edit_sale.php?id=" . $row['id'] . "' class='btn btn-warning btn-sm' title='Edit'><i class='ti ti-edit'></i></a>
-                                                        <a href='print_invoice.php?id=" . $row['id'] . "' class='btn btn-secondary btn-sm' title='Print' target='_blank'><i class='ti ti-printer'></i></a>
+                                                        <a href='print_invoice.php?id=" . $row['id'] . "' class='btn btn-secondary btn-sm' title='Print'><i class='ti ti-printer'></i></a>
                                                         <a href='delete_sale.php?id=" . $row['id'] . "' class='btn btn-danger btn-sm' title='Delete' onclick='return confirm(\"Are you sure you want to delete this sale?\")'><i class='ti ti-trash'></i></a>
                                                     </div>
                                                   </td>";

@@ -3,6 +3,67 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Include database connection if not already included
+if (!isset($conn)) {
+    include('include/connect.php');
+}
+
+// Check for low stock products
+$low_stock_count = 0;
+$low_stock_notifications = '';
+
+if (isset($conn)) {
+    $low_stock_query = "SELECT name, stock_quantity FROM products WHERE stock_quantity > 0 AND stock_quantity < 10 ORDER BY stock_quantity ASC";
+    $low_stock_result = mysqli_query($conn, $low_stock_query);
+    
+    if ($low_stock_result && mysqli_num_rows($low_stock_result) > 0) {
+        $low_stock_count = mysqli_num_rows($low_stock_result);
+        
+        while ($product = mysqli_fetch_assoc($low_stock_result)) {
+            $low_stock_notifications .= '
+            <a href="products_stock.php?filter=low" class="dropdown-item">
+                <div class="flex items-center">
+                    <div class="shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-warning-500/20 flex items-center justify-center">
+                            <i data-feather="alert-triangle" class="text-warning-500"></i>
+                        </div>
+                    </div>
+                    <div class="grow ms-3">
+                        <h6 class="mb-1 text-sm">Low Stock Alert</h6>
+                        <p class="mb-0 text-xs text-muted">' . htmlspecialchars($product['name']) . ' (' . $product['stock_quantity'] . ' left)</p>
+                    </div>
+                </div>
+            </a>';
+        }
+    }
+    
+    // Check for out of stock products
+    $out_of_stock_query = "SELECT name FROM products WHERE stock_quantity <= 0";
+    $out_of_stock_result = mysqli_query($conn, $out_of_stock_query);
+    
+    if ($out_of_stock_result && mysqli_num_rows($out_of_stock_result) > 0) {
+        $out_of_stock_count = mysqli_num_rows($out_of_stock_result);
+        $low_stock_count += $out_of_stock_count;
+        
+        while ($product = mysqli_fetch_assoc($out_of_stock_result)) {
+            $low_stock_notifications .= '
+            <a href="products_stock.php?filter=out" class="dropdown-item">
+                <div class="flex items-center">
+                    <div class="shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-danger-500/20 flex items-center justify-center">
+                            <i data-feather="x-circle" class="text-danger-500"></i>
+                        </div>
+                    </div>
+                    <div class="grow ms-3">
+                        <h6 class="mb-1 text-sm">Out of Stock</h6>
+                        <p class="mb-0 text-xs text-muted">' . htmlspecialchars($product['name']) . '</p>
+                    </div>
+                </div>
+            </a>';
+        }
+    }
+}
 ?>
 
 <header class="pc-header">
@@ -89,7 +150,9 @@ if (session_status() === PHP_SESSION_NONE) {
           <a class="pc-head-link dropdown-toggle me-0" data-pc-toggle="dropdown" href="#" role="button"
             aria-haspopup="false" aria-expanded="false">
             <i data-feather="bell"></i>
-            <span class="badge bg-success-500 text-white rounded-full z-10 absolute right-0 top-0">3</span>
+            <?php if ($low_stock_count > 0): ?>
+            <span class="badge bg-danger-500 text-white rounded-full z-10 absolute right-0 top-0"><?php echo $low_stock_count; ?></span>
+            <?php endif; ?>
           </a>
           <div class="dropdown-menu dropdown-notification dropdown-menu-end pc-h-dropdown p-2">
             <div class="dropdown-header flex items-center justify-between py-4 px-5">
@@ -98,12 +161,16 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
             <div class="dropdown-body header-notification-scroll relative py-4 px-5"
               style="max-height: calc(100vh - 215px)">
-              <p class="text-span mb-3">Today</p>
-              
+              <?php if (!empty($low_stock_notifications)): ?>
+                <p class="text-span mb-3">Stock Alerts</p>
+                <?php echo $low_stock_notifications; ?>
+              <?php else: ?>
+                <p class="text-center text-muted py-4">No notifications</p>
+              <?php endif; ?>
             </div>
             <div class="text-center py-2">
-              <a href="#!" class="text-danger-500 hover:text-danger-600 focus:text-danger-600 active:text-danger-600">
-                Clear all Notifications
+              <a href="products_stock.php" class="text-primary-500 hover:text-primary-600 focus:text-primary-600 active:text-primary-600">
+                View All Products
               </a>
             </div>
           </div>

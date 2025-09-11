@@ -13,7 +13,7 @@ $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : '
 $discount = isset($_POST['discount']) ? floatval($_POST['discount']) : 0.00;
 $payment_status = ($payment_method === 'cash') ? 'paid' : 'pending';
 $subtotal = 0;
-$tax_rate = 0.10; // 10% tax
+$tax_rate = 0.01; // 1% tax (changed from 10% to 1%)
 
 // Get product details from POST data
 $product_ids = isset($_POST['product_id']) ? $_POST['product_id'] : [];
@@ -106,9 +106,9 @@ try {
     // If we got here, commit the transaction
     mysqli_commit($conn);
     
-    // Set success message and redirect to sales.php
+    // Set success message and redirect to print invoice
     $_SESSION['success_message'] = "Sale completed successfully! Invoice #: " . $invoice_number;
-    header("Location: sales.php");
+    header("Location: print_invoice_pos.php?id=" . $sale_id);
     exit();
     
 } catch (Exception $e) {

@@ -192,14 +192,88 @@ foreach ($categories as $category) {
 .back-to-sales-btn span {
     color: white;
 }
+
+/* Success message styles */
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.5s ease-out;
+    max-width: 400px;
+}
+
+.success-message.hide {
+    animation: slideOut 0.5s ease-in forwards;
+}
+
+.success-message .close-btn {
+    margin-left: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
     </style>
+
+    <script>
+      // Function to get theme from localStorage or default to light
+      function getStoredTheme() {
+        return localStorage.getItem('theme') || 'light';
+      }
+      
+      // Function to set theme in localStorage
+      function setStoredTheme(theme) {
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Apply theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = getStoredTheme();
+        document.documentElement.setAttribute('data-pc-theme', savedTheme);
+        
+        // Update the theme icon in the header
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', savedTheme === 'dark' ? 'moon' : 'sun');
+        }
+      });
+    </script>
 </head>
 <body>
 
 <header class="pc-header">
     <div class="header-wrapper">
         <div class="header-logo">
-            <img src="../assets/images/logo.png" alt="Nisai Fashion Store Logo">
+            <img src="../assets/images/logo_report_icon.png" alt="Nisai Fashion Store Logo">
         </div>
         <div class="me-auto">
             <ul class="header-nav">
@@ -212,19 +286,27 @@ foreach ($categories as $category) {
                         </svg>
                     </a>
                 </li>
-                <!-- Add Back to Sales button -->
-                <li class="pc-h-item">
-                <!-- Update this -->
-                <a href="sales.php" class="pc-head-link back-to-sales-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                </a>
-                </li>
+ 
             </ul>
         </div>
         <div class="ms-auto">
             <ul class="header-nav">
+
+                <li class="pc-h-item">
+                    <a href="sales.php" class="pc-head-link" id="theme-toggle">
+                        <span class="bi bi-cart-check">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-check" viewBox="0 0 16 16">
+                            <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </span>
+                        <span class="dark-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </span>
+                    </a>
+                </li>
                 <li class="pc-h-item">
                     <a href="#" class="pc-head-link" id="theme-toggle">
                         <span class="light-icon">
@@ -353,6 +435,18 @@ foreach ($categories as $category) {
     </section>
 </div>
 
+<!-- Success Message Container -->
+<?php if (isset($_SESSION['success_message'])): ?>
+<div class="success-message" id="successMessage">
+    <span><?php echo $_SESSION['success_message']; ?></span>
+    <span class="close-btn" onclick="closeSuccessMessage()">&times;</span>
+</div>
+<?php 
+// Clear the success message after displaying it
+unset($_SESSION['success_message']);
+endif; 
+?>
+
 <!-- Floating Cart Button -->
 <div class="cart-button">
     <span class="cart-count">0</span>
@@ -378,7 +472,7 @@ foreach ($categories as $category) {
             <span class="subtotal-amount">$0.00</span>
         </div>
         <div class="cart-tax">
-            <span>Tax (10%):</span>
+            <span>Tax (1%):</span>
             <span class="tax-amount">$0.00</span>
         </div>
         <div class="cart-discount">
@@ -506,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cartButton.style.display = itemCount > 0 ? 'flex' : 'none';
         
         // Calculate totals
-        const tax = subtotal * 0.10;
+        const tax = subtotal * 0.01; // Changed from 10% to 1%
         const discount = parseFloat(document.getElementById('discount').value) || 0;
         const total = subtotal + tax - discount;
         
@@ -664,6 +758,78 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the filter on page load
     filterProducts();
 });
+
+// Function to close success message
+function closeSuccessMessage() {
+    const message = document.getElementById('successMessage');
+    if (message) {
+        message.classList.add('hide');
+        setTimeout(() => {
+            message.remove();
+        }, 500);
+    }
+}
+
+// Auto-hide success message after 5 seconds
+setTimeout(() => {
+    closeSuccessMessage();
+}, 5000);
 </script>
+    <script>
+      // Modified layout_change function to store theme preference
+      function layout_change(theme) {
+        if (theme === 'false') {
+          // Use the current theme if 'false' is passed (default behavior)
+          theme = document.documentElement.getAttribute('data-pc-theme');
+        }
+        setStoredTheme(theme);
+        document.documentElement.setAttribute('data-pc-theme', theme);
+        
+        // Update the theme icon
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', theme === 'dark' ? 'moon' : 'sun');
+          // Re-initialize Feather icons
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }
+      }
+      
+      // Modified layout_change_default function
+      function layout_change_default() {
+        const defaultTheme = 'light'; // Set your default theme here
+        layout_change(defaultTheme);
+      }
+      
+      // Initialize with stored theme
+      const savedTheme = getStoredTheme();
+      layout_change(savedTheme);
+    </script>
+     
+    <script>
+      layout_theme_sidebar_change('dark');
+    </script>
+    
+     
+    <script>
+      change_box_container('false');
+    </script>
+     
+    <script>
+      layout_caption_change('true');
+    </script>
+     
+    <script>
+      layout_rtl_change('false');
+    </script>
+     
+    <script>
+      preset_change('preset-1');
+    </script>
+     
+    <script>
+      main_layout_change('vertical');
+    </script>
 </body>
-</html> 
+</html>

@@ -1,99 +1,90 @@
 <?php
-// Database configuration
+session_start();
+
+// Database configuration - same as login.php
 $servername = "localhost";
-$username = "root"; // Change this to your MySQL username
-$password = ""; // Change this to your MySQL password
+$db_username = "root";
+$db_password = "";
 $dbname = "nisai_db";
-
-// Create connection to MySQL server
-$conn = new mysqli($servername, $username, $password);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Create database if it doesn't exist
-$sql = "CREATE DATABASE IF NOT EXISTS $dbname";
-if ($conn->query($sql)) {
-    // Select the database
-    $conn->select_db($dbname);
-    
-    // Create users table if it doesn't exist
-    $sql = "CREATE TABLE IF NOT EXISTS users (
-        id INT(11) AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )";
-    
-    if (!$conn->query($sql)) {
-        die("Error creating table: " . $conn->error);
-    }
-} else {
-    die("Error creating database: " . $conn->error);
-}
 
 // Initialize variables
 $error_message = '';
+$success_message = '';
 
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get form data
-    $username = trim($_POST['username']);
     $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $confirm_password = trim($_POST['confirm_password']);
-    $agree_terms = isset($_POST['agree_terms']) ? true : false;
     
     // Validate form data
-    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
-        $error_message = "All fields are required.";
+    if (empty($email)) {
+        $error_message = "Email address is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error_message = "Invalid email format.";
-    } elseif ($password !== $confirm_password) {
-        $error_message = "Passwords do not match.";
-    } elseif (strlen($password) < 8) {
-        $error_message = "Password must be at least 8 characters long.";
-    } elseif (!$agree_terms) {
-        $error_message = "You must agree to the terms and conditions.";
+        $error_message = "Please enter a valid email address.";
     } else {
-        // Check if username or email already exists
-        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-        $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $stmt->store_result();
-        
-        if ($stmt->num_rows > 0) {
-            $error_message = "Username or email already exists.";
-        } else {
-            // Hash the password
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        try {
+            // Create connection
+            $conn = new mysqli($servername, $db_username, $db_password, $dbname);
             
-            // Insert new user
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $username, $email, $hashed_password);
-            
-            if ($stmt->execute()) {
-                // Redirect to login page on successful registration
-                header("Location: login.php?registration=success");
-                exit();
-            } else {
-                $error_message = "Registration failed. Please try again.";
+            // Check connection
+            if ($conn->connect_error) {
+                throw new Exception("Connection failed: " . $conn->connect_error);
             }
+            
+            // Check if email exists in database
+            $stmt = $conn->prepare("SELECT id, username FROM users WHERE email = ?");
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+            
+            $stmt->bind_param("s", $email);
+            if (!$stmt->execute()) {
+                throw new Exception("Execute failed: " . $stmt->error);
+            }
+            
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 1) {
+                $user = $result->fetch_assoc();
+                
+                // Generate a unique reset token
+                $reset_token = bin2hex(random_bytes(32));
+                $expiry_date = date("Y-m-d H:i:s", strtotime("+1 hour"));
+                
+                // Store the token in the database
+                $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, token_expiry = ? WHERE email = ?");
+                $update_stmt->bind_param("sss", $reset_token, $expiry_date, $email);
+                
+                if ($update_stmt->execute()) {
+                    // In a real application, you would send an email here with a link to reset_password.php?token=$reset_token
+                    // For this example, we'll just show a success message
+                    $success_message = "Password reset instructions have been sent to your email address.";
+                } else {
+                    $error_message = "Error generating reset token. Please try again.";
+                }
+                
+                $update_stmt->close();
+            } else {
+                $error_message = "No account found with that email address.";
+            }
+            
+            $stmt->close();
+            $conn->close();
+            
+        } catch (Exception $e) {
+            $error_message = "Database error: " . $e->getMessage();
+            // Log the full error for debugging (remove in production)
+            error_log($e->getMessage());
         }
-        $stmt->close();
     }
 }
-$conn->close();
 ?>
 
 <!doctype html>
 <html lang="en" data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" dir="ltr" data-pc-theme="light">
   <!-- [Head] start -->
   <head>
-    <title>Register Page</title>
+    <title>Forgot Password</title>
     <!-- [Meta] -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui" />
@@ -109,7 +100,7 @@ $conn->close();
     <meta name="author" content="CodedThemes" />
 
     <!-- [Favicon] icon -->
-    <link rel="icon" href="assets/images/favicon.svg" type="image/x-icon" />
+    <link rel="icon" href="assets/images/logo_report_icon.png" type="image/x-icon" />
     <!-- [Font] Family -->
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <!-- [phosphor Icons] https://phosphoricons.com/ -->
@@ -173,46 +164,34 @@ $conn->close();
             <div class="card sm:my-12  w-full shadow-none">
               <div class="card-body !p-10">
                 <div class="text-center mb-8">
-                  <a href="#"><img src="assets/images/logo_nisai.png" alt="img" class="mx-auto auth-logo"/></a>
+                  <a href="login.php"><img src="assets/images/logo_report.png" alt="img" width=100px;/></a>
                 </div>
                 
-                <?php if (isset($_GET['registration']) && $_GET['registration'] === 'success'): ?>
-                  <div class="alert alert-success mb-4">
-                    Registration successful! Please login.
-                  </div>
-                <?php elseif (!empty($error_message)): ?>
+                <?php if (!empty($error_message)): ?>
                   <div class="alert alert-danger mb-4">
                     <?php echo htmlspecialchars($error_message); ?>
                   </div>
                 <?php endif; ?>
                 
-                <h4 class="text-center font-medium mb-4">Sign up</h4>
+                <?php if (!empty($success_message)): ?>
+                  <div class="alert alert-success mb-4">
+                    <?php echo htmlspecialchars($success_message); ?>
+                  </div>
+                <?php endif; ?>
+                
+                <h4 class="text-center font-medium mb-4">Reset Your Password</h4>
+                <p class="text-center text-muted mb-4">Enter your email address and we'll send you instructions to reset your password.</p>
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                  <div class="mb-3">
-                    <input type="text" name="username" class="form-control" placeholder="Username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
-                  </div>                
-                  <div class="mb-3">
-                    <input type="email" name="email" class="form-control" placeholder="Email Address" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
-                  </div>
-                  <div class="mb-3">
-                    <input type="password" name="password" class="form-control" placeholder="Password" required>
-                  </div>
                   <div class="mb-4">
-                    <input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
-                  </div>
-                  <div class="flex mt-1 justify-between items-center flex-wrap">
-                    <div class="form-check">
-                      <input class="form-check-input input-primary" type="checkbox" id="customCheckc1" name="agree_terms" <?php echo (isset($_POST['agree_terms']) ? 'checked' : ''); ?> required />
-                      <label class="form-check-label text-muted" for="customCheckc1">I agree to all the Terms &amp; Condition</label>
-                    </div>
+                    <input type="email" name="email" class="form-control" id="floatingInput" placeholder="Email Address" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
                   </div>
                   <div class="mt-4 text-center">
-                    <button type="submit" class="btn btn-primary mx-auto shadow-2xl">Sign up</button>
+                    <button type="submit" class="btn btn-primary mx-auto shadow-2xl">Send Reset Instructions</button>
                   </div>
                 </form>
                 <div class="flex justify-between items-end flex-wrap mt-4">
-                  <h6 class="font-medium mb-0">Already have an Account?</h6>
-                  <a href="login.php" class="text-primary-500">Login</a>
+                  <h6 class="font-medium mb-0">Remember your password?</h6>
+                  <a href="login.php" class="text-primary-500">Back to Login</a>
                 </div>
               </div>
             </div>

@@ -27,12 +27,28 @@ include('include/topbar.php');
             </div>
         </div>
         <!-- [ breadcrumb ] end -->
+        
+        <!-- Success and Error Message Display -->
         <?php if (isset($_SESSION['success_message'])): ?>
-        <div class="alert alert-primary alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
+            <i class="ti ti-check me-2"></i>
             <?php echo $_SESSION['success_message']; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <?php unset($_SESSION['success_message']); endif; ?>
+        <?php 
+        unset($_SESSION['success_message']); 
+        endif; 
+        
+        if (isset($_SESSION['error_message'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+            <i class="ti ti-alert-circle me-2"></i>
+            <?php echo $_SESSION['error_message']; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php 
+        unset($_SESSION['error_message']); 
+        endif; 
+        ?>
 
         <div class="row">
             <div class="col-12">
@@ -41,24 +57,6 @@ include('include/topbar.php');
                         <a href="add_new_products.php" class="btn btn-outline-info">
                             <i class="ti ti-plus"></i> Add Product
                         </a>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-filter"></i> Filter
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="?filter=all">All Products</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <?php
-                                $category_query = "SELECT * FROM category";
-                                $category_result = mysqli_query($conn, $category_query);
-                                if ($category_result) {
-                                    while ($cat = mysqli_fetch_assoc($category_result)) {
-                                        echo '<li><a class="dropdown-item" href="?category='.urlencode($cat['name']).'">'.$cat['name'].'</a></li>';
-                                    }
-                                }
-                                ?>
-                            </ul>
-                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -176,6 +174,13 @@ include('include/topbar.php');
 
 <script>
 $(document).ready(function() {
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert-dismissible').fadeTo(1000, 0).slideUp(1000, function(){
+            $(this).alert('close');
+        });
+    }, 5000);
+    
     $('.delete-btn').click(function() {
         if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
             const productId = $(this).data('id');
@@ -183,8 +188,7 @@ $(document).ready(function() {
                 if (response.success) {
                     showAlert('success', response.message);
                     setTimeout(function() {
-                        location.reload(); // This could be changed to redirect
-                        // Or use: window.location.href = response.redirect || 'products.php';
+                        location.reload();
                     }, 1500);
                 } else {
                     showAlert('danger', response.message);
@@ -200,13 +204,18 @@ $(document).ready(function() {
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'
-        ]
-    });
+        ],
+        responsive: true,
+        pageLength: 25,
+        order: [[0, 'desc']]
+    }); 
 });
+
 // Helper function to show alert messages
 function showAlert(type, message) {
     const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="ti ${type === 'success' ? 'ti-check' : 'ti-alert-circle'} me-2"></i>
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -220,8 +229,11 @@ function showAlert(type, message) {
     
     // Auto-close after 5 seconds
     setTimeout(function() {
-        $('.alert-dismissible').alert('close');
+        $('.alert-dismissible').fadeTo(1000, 0).slideUp(1000, function(){
+            $(this).alert('close');
+        });
     }, 5000);
-} 
+}  
+
 </script>
 <?php include ('include/footer.php'); ?>

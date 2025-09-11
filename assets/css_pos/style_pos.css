@@ -1,3 +1,5 @@
+/* style_pos.css - Updated */
+
 /* General Styles */
 body {
     font-family: 'Arial', sans-serif;
@@ -138,6 +140,7 @@ body {
 /* Theme Toggle Styles */
 #theme-toggle {
     position: relative;
+    cursor: pointer;
 }
 
 .light-icon, .dark-icon {
@@ -465,6 +468,175 @@ body {
     border-radius: 4px;
 }
 
+/* Search bar styles */
+.search-container {
+    margin: 20px 0;
+    position: relative;
+}
+
+.search-box {
+    width: 100%;
+    padding: 12px 20px;
+    padding-left: 45px;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: #4e73df;
+    box-shadow: 0 2px 10px rgba(78, 115, 223, 0.25);
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+}
+
+.no-results {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+/* Quick stats */
+.stats-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4e73df;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Product code and stock styles */
+.product-code, .stock-quantity {
+    display: flex;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.product-code .label, 
+.stock-quantity .label {
+    font-weight: 600;
+    margin-right: 5px;
+    min-width: 40px;
+}
+
+.stock-quantity .value {
+    font-weight: bold;
+}
+
+.low-stock {
+    color: #e74c3c;
+}
+
+.low-stock-warning {
+    margin-left: 5px;
+    color: #e74c3c;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Back to Sales button styles */
+.back-to-sales-btn {
+    display: flex;
+    align-items: center;
+    background-color: #4e73df;
+    color: white !important;
+    padding: 8px 15px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.back-to-sales-btn:hover {
+    background-color: #2e59d9;
+    text-decoration: none;
+}
+
+.back-to-sales-btn svg {
+    stroke: white;
+    margin-right: 5px;
+}
+
+.back-to-sales-btn span {
+    color: white;
+}
+
+/* Success message styles */
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.5s ease-out;
+    max-width: 400px;
+}
+
+.success-message.hide {
+    animation: slideOut 0.5s ease-in forwards;
+}
+
+.success-message .close-btn {
+    margin-left: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
 
 /* Dark Mode Styles */
 body.dark-mode {
@@ -534,6 +706,45 @@ body.dark-mode #discount {
     color: #fff;
 }
 
+/* Dark mode styles for search and stats */
+body.dark-mode .search-box {
+    background-color: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode .search-icon {
+    color: #aaa;
+}
+
+body.dark-mode .stat-card {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+}
+
+body.dark-mode .stat-label {
+    color: #aaa;
+}
+
+body.dark-mode .product-code,
+body.dark-mode .stock-quantity {
+    color: #ccc;
+}
+
+body.dark-mode .dropdown-menu {
+    background-color: #2a2a2a;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .dropdown-item {
+    color: #f0f0f0;
+}
+
+body.dark-mode .dropdown-item:hover {
+    background-color: #333;
+    color: #4e73df;
+}
+
 /* Show/hide icons based on mode */
 body:not(.dark-mode) .dark-icon {
     opacity: 0;
@@ -596,6 +807,10 @@ body.dark-mode .dark-icon {
     
     #sidebar-toggle {
         display: flex;
+    }
+    
+    .stats-container {
+        flex-direction: column;
     }
 }
 

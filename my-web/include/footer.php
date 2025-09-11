@@ -27,12 +27,39 @@
     <div class="floting-button fixed bottom-[50px] right-[30px] z-[1030]">
     </div>
 
-    
+ <!-- Updated JavaScript functions to use localStorage -->
     <script>
-      layout_change('false');
+      // Modified layout_change function to store theme preference
+      function layout_change(theme) {
+        if (theme === 'false') {
+          // Use the current theme if 'false' is passed (default behavior)
+          theme = document.documentElement.getAttribute('data-pc-theme');
+        }
+        setStoredTheme(theme);
+        document.documentElement.setAttribute('data-pc-theme', theme);
+        
+        // Update the theme icon
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', theme === 'dark' ? 'moon' : 'sun');
+          // Re-initialize Feather icons
+          if (typeof feather !== 'undefined') {
+            feather.replace();
+          }
+        }
+      }
+      
+      // Modified layout_change_default function
+      function layout_change_default() {
+        const defaultTheme = 'light'; // Set your default theme here
+        layout_change(defaultTheme);
+      }
+      
+      // Initialize with stored theme
+      const savedTheme = getStoredTheme();
+      layout_change(savedTheme);
     </script>
      
-    
     <script>
       layout_theme_sidebar_change('dark');
     </script>

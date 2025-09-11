@@ -42,6 +42,30 @@
 
   </head>
   <!-- [Head] end -->
+   <!-- Add this script to handle theme loading -->
+    <script>
+      // Function to get theme from localStorage or default to light
+      function getStoredTheme() {
+        return localStorage.getItem('theme') || 'light';
+      }
+      
+      // Function to set theme in localStorage
+      function setStoredTheme(theme) {
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Apply theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = getStoredTheme();
+        document.documentElement.setAttribute('data-pc-theme', savedTheme);
+        
+        // Update the theme icon in the header
+        const themeIcon = document.querySelector('.pc-h-item [data-feather="sun"], .pc-h-item [data-feather="moon"]');
+        if (themeIcon) {
+          themeIcon.setAttribute('data-feather', savedTheme === 'dark' ? 'moon' : 'sun');
+        }
+      });
+    </script>
   <!-- [Body] Start -->
 
   <body>

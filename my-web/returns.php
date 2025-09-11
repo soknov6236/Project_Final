@@ -1,108 +1,62 @@
 <?php
+ob_start(); // Start output buffering
 session_start();
 if (!isset($_SESSION['logged_in'])) {
     header("Location: login.php");
     exit();
 }
 
-require_once('include/connect.php');
+include('include/connect.php');
 include('include/header.php');
 include('include/sidebar.php');
 include('include/topbar.php');
 
-// Handle return status change
-if (isset($_GET['change_status']) && isset($_GET['id'])) {
-    $return_id = intval($_GET['id']);
-    $new_status = $_GET['change_status'];
-    
-    $valid_statuses = ['pending', 'approved', 'rejected', 'processed'];
-    if (in_array($new_status, $valid_statuses)) {
-        mysqli_begin_transaction($conn);
-        
-        try {
-            // Update return status
-            $query = "UPDATE returns SET status = ? WHERE return_id = ?";
-            $stmt = mysqli_prepare($conn, $query);
-            mysqli_stmt_bind_param($stmt, 'si', $new_status, $return_id);
-            mysqli_stmt_execute($stmt);
-            
-            // If status is approved, update product stock and inventory history
-            if ($new_status == 'approved') {
-                // Get return items
-                $items_query = "SELECT product_id, quantity FROM return_items WHERE return_id = ?";
-                $stmt = mysqli_prepare($conn, $items_query);
-                mysqli_stmt_bind_param($stmt, 'i', $return_id);
-                mysqli_stmt_execute($stmt);
-                $items_result = mysqli_stmt_get_result($stmt);
-                
-                while ($item = mysqli_fetch_assoc($items_result)) {
-                    // Update product stock
-                    $update_query = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE product_id = ?";
-                    $stmt = mysqli_prepare($conn, $update_query);
-                    mysqli_stmt_bind_param($stmt, 'ii', $item['quantity'], $item['product_id']);
-                    mysqli_stmt_execute($stmt);
-                    
-                    // Record in inventory history
-                    $history_query = "INSERT INTO inventory_history 
-                                    (product_id, action, quantity, user_name, notes, reference_id) 
-                                    VALUES (?, 'in', ?, ?, ?, ?)";
-                    $notes = "Return approved for return ID: $return_id";
-                    $stmt = mysqli_prepare($conn, $history_query);
-                    mysqli_stmt_bind_param($stmt, 'iissi', $item['product_id'], $item['quantity'], 
-                                         $_SESSION['username'], $notes, $return_id);
-                    mysqli_stmt_execute($stmt);
-                }
-                
-                // Create refund record if not exists
-                $check_refund = "SELECT refund_id FROM refunds WHERE return_id = ?";
-                $stmt = mysqli_prepare($conn, $check_refund);
-                mysqli_stmt_bind_param($stmt, 'i', $return_id);
-                mysqli_stmt_execute($stmt);
-                $refund_exists = mysqli_stmt_get_result($stmt);
-                
-                if (mysqli_num_rows($refund_exists) == 0) {
-                    $get_return = "SELECT refund_amount, payment_method FROM returns WHERE return_id = ?";
-                    $stmt = mysqli_prepare($conn, $get_return);
-                    mysqli_stmt_bind_param($stmt, 'i', $return_id);
-                    mysqli_stmt_execute($stmt);
-                    $return_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-                    
-                    $refund_query = "INSERT INTO refunds 
-                                    (return_id, amount, payment_method, processed_by, notes)
-                                    VALUES (?, ?, ?, ?, ?)";
-                    $refund_notes = "Refund for return #$return_id";
-                    $stmt = mysqli_prepare($conn, $refund_query);
-                    mysqli_stmt_bind_param($stmt, 'idsss', $return_id, $return_data['refund_amount'], 
-                                     $return_data['payment_method'], $_SESSION['username'], $refund_notes);
-                    mysqli_stmt_execute($stmt);
-                }
-            }
-            
-            mysqli_commit($conn);
-            $_SESSION['success_message'] = "Return status updated successfully";
-        } catch (Exception $e) {
-            mysqli_rollback($conn);
-            $_SESSION['error_message'] = "Error updating return status: " . $e->getMessage();
-        }
-        
-        header("Location: returns.php");
-        exit();
-    }
+// Get filter parameters
+$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+$status = isset($_GET['status']) ? $_GET['status'] : '';
+$customer_id = isset($_GET['customer_id']) ? intval($_GET['customer_id']) : 0;
+
+// Build the base query
+$query = "SELECT r.*, c.customer_name, s.invoice_number 
+          FROM returns r
+          LEFT JOIN customers c ON r.customer_id = c.id
+          LEFT JOIN sales s ON r.sale_id = s.id
+          WHERE 1=1";
+
+// Add filters to the query
+$params = [];
+if (!empty($start_date)) {
+    $query .= " AND r.return_date >= ?";
+    $params[] = $start_date;
+}
+if (!empty($end_date)) {
+    $query .= " AND r.return_date <= ?";
+    $params[] = $end_date . ' 23:59:59';
+}
+if (!empty($status)) {
+    $query .= " AND r.status = ?";
+    $params[] = $status;
+}
+if ($customer_id > 0) {
+    $query .= " AND r.customer_id = ?";
+    $params[] = $customer_id;
 }
 
-// Fetch all returns with additional information
-$query = "SELECT r.*, 
-                 u.username AS processed_by,
-                 COUNT(ri.return_item_id) AS item_count,
-                 SUM(ri.subtotal) AS total_amount,
-                 rf.amount AS refund_amount
-          FROM returns r
-          LEFT JOIN users u ON r.created_by = u.id
-          LEFT JOIN return_items ri ON r.return_id = ri.return_id
-          LEFT JOIN refunds rf ON r.return_id = rf.return_id
-          GROUP BY r.return_id
-          ORDER BY r.return_date DESC";
-$result = mysqli_query($conn, $query);
+$query .= " ORDER BY r.return_date DESC";
+
+// Prepare and execute the query
+$stmt = mysqli_prepare($conn, $query);
+if (!empty($params)) {
+    $types = str_repeat('s', count($params));
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// Get customers for filter dropdown
+$customers_query = "SELECT id, customer_name FROM customers ORDER BY customer_name";
+$customers_result = mysqli_query($conn, $customers_query);
 ?>
 
 <!-- [ Main Content ] start -->
@@ -112,7 +66,7 @@ $result = mysqli_query($conn, $query);
         <div class="page-header">
             <div class="page-block">
                 <div class="page-header-title">
-                    <h5 class="mb-0 font-medium">Return Management</h5>
+                    <h5 class="mb-0 font-medium">Returns Management</h5>
                 </div>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item"><a href="index.php">Home</a></li>
@@ -124,7 +78,8 @@ $result = mysqli_query($conn, $query);
         <!-- [ breadcrumb ] end -->
 
         <?php if (isset($_SESSION['success_message'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-primary alert-dismissible fade show" role="alert">
+            <i class="ti ti-check me-2"></i>
             <?php echo $_SESSION['success_message']; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -132,6 +87,7 @@ $result = mysqli_query($conn, $query);
 
         <?php if (isset($_SESSION['error_message'])): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ti ti-alert-circle me-2"></i>
             <?php echo $_SESSION['error_message']; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -141,93 +97,102 @@ $result = mysqli_query($conn, $query);
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5>Return List</h5>
-                        <div>
-                            <a href="add_new_returns.php" class="btn btn-primary">
-                                <i class="ti ti-plus"></i> New Return
-                            </a>
-                            <button class="btn btn-outline-secondary" id="export-btn">
-                                <i class="ti ti-download"></i> Export
-                            </button>
-                            <a href="returns_report.php" class="btn btn-info">
-                                <i class="ti ti-report"></i> Reports
-                            </a>
-                        </div>
+                        <h5>Return Records</h5>
+                        <a href="add_new_returns.php" class="btn btn-primary">
+                            <i class="ti ti-plus me-1"></i> New Return
+                        </a>
                     </div>
                     <div class="card-body">
+                        <!-- Filter Form -->
+                        <form id="returnsFilterForm" method="GET" class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="startDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="start_date" 
+                                           value="<?= htmlspecialchars($start_date) ?>">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="endDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="end_date" 
+                                           value="<?= htmlspecialchars($end_date) ?>" <?= empty($start_date) ? 'disabled' : '' ?>>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="statusSelect" class="form-label">Status</label>
+                                    <select class="form-select" id="statusSelect" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                        <option value="approved" <?= $status === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                        <option value="rejected" <?= $status === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                                        <option value="completed" <?= $status === 'completed' ? 'selected' : '' ?>>Completed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="customerSelect" class="form-label">Customer</label>
+                                    <select class="form-select" id="customerSelect" name="customer_id">
+                                        <option value="0">All Customers</option>
+                                        <?php while ($customer = mysqli_fetch_assoc($customers_result)): ?>
+                                            <option value="<?= $customer['id'] ?>" 
+                                                <?= $customer_id == $customer['id'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($customer['customer_name']) ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary">Filter</button>
+                                </div>
+                            </div>
+                        </form>
+
                         <div class="table-responsive">
-                            <table class="table table-striped" id="returns-table">
+                            <table id="returns-table" class="table table-striped table-bordered nowrap" style="width:100%">
                                 <thead>
                                     <tr>
                                         <th>Return ID</th>
                                         <th>Date</th>
                                         <th>Invoice #</th>
                                         <th>Customer</th>
-                                        <th>Items</th>
-                                        <th>Amount</th>
-                                        <th>Refund</th>
+                                        <th>Total Amount</th>
+                                        <th>Reason</th>
                                         <th>Status</th>
-                                        <th>Processed By</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php while ($return = mysqli_fetch_assoc($result)): ?>
-                                        <tr>
-                                            <td><?php echo $return['return_id']; ?></td>
-                                            <td><?php echo date('M d, Y h:i A', strtotime($return['return_date'])); ?></td>
-                                            <td><?php echo htmlspecialchars($return['invoice_number']); ?></td>
-                                            <td><?php echo htmlspecialchars($return['customer_name']); ?></td>
-                                            <td><?php echo $return['item_count']; ?></td>
-                                            <td><?php echo number_format($return['total_amount'], 2); ?></td>
-                                            <td><?php echo isset($return['refund_amount']) ? number_format($return['refund_amount'], 2) : 'N/A'; ?></td>
-                                            <td>
-                                                <span class="badge 
-                                                    <?php 
-                                                    switch($return['status']) {
-                                                        case 'approved': echo 'bg-success'; break;
-                                                        case 'rejected': echo 'bg-danger'; break;
-                                                        case 'processed': echo 'bg-info'; break;
-                                                        default: echo 'bg-warning';
-                                                    }
-                                                    ?>">
-                                                    <?php echo ucfirst($return['status']); ?>
-                                                </span>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($return['processed_by'] ?? 'N/A'); ?></td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <a href="view_return.php?id=<?php echo $return['return_id']; ?>" class="btn btn-sm btn-info" title="View">
-                                                        <i class="ti ti-eye"></i>
-                                                    </a>
-                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <span class="visually-hidden">Toggle Dropdown</span>
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <?php if ($return['status'] != 'approved'): ?>
-                                                        <li><a class="dropdown-item" href="returns.php?change_status=approved&id=<?php echo $return['return_id']; ?>">
-                                                            <i class="ti ti-check"></i> Approve
-                                                        </a></li>
-                                                        <?php endif; ?>
-                                                        <?php if ($return['status'] != 'rejected'): ?>
-                                                        <li><a class="dropdown-item" href="returns.php?change_status=rejected&id=<?php echo $return['return_id']; ?>">
-                                                            <i class="ti ti-x"></i> Reject
-                                                        </a></li>
-                                                        <?php endif; ?>
-                                                        <?php if ($return['status'] != 'processed'): ?>
-                                                        <li><a class="dropdown-item" href="returns.php?change_status=processed&id=<?php echo $return['return_id']; ?>">
-                                                            <i class="ti ti-checkbox"></i> Mark as Processed
-                                                        </a></li>
-                                                        <?php endif; ?>
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        <li><a class="dropdown-item text-danger" href="delete_return.php?id=<?php echo $return['return_id']; ?>" onclick="return confirm('Are you sure you want to delete this return?');">
-                                                            <i class="ti ti-trash"></i> Delete
-                                                        </a></li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
+                                    <?php
+                                    if (mysqli_num_rows($result) > 0) {
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                            echo "<tr>";
+                                            echo "<td>" . htmlspecialchars($row['return_id']) . "</td>";
+                                            echo "<td>" . date('M d, Y', strtotime($row['return_date'])) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['invoice_number']) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['customer_name']) . "</td>";
+                                            echo "<td>$" . number_format($row['total_amount'], 2) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['reason']) . "</td>";
+                                            echo "<td><span class='badge " . getStatusBadgeClass($row['status']) . "'>" . ucfirst($row['status']) . "</span></td>";
+                                            echo "<td>
+                                                    <div class='btn-group' role='group'>
+                                                        <a href='view_return.php?id=" . $row['return_id'] . "' class='btn btn-info btn-sm' title='View'><i class='ti ti-eye'></i></a>
+                                                        <a href='edit_return.php?id=" . $row['return_id'] . "' class='btn btn-warning btn-sm' title='Edit'><i class='ti ti-edit'></i></a>
+                                                        <a href='delete_return.php?id=" . $row['return_id'] . "' class='btn btn-danger btn-sm' title='Delete' onclick='return confirm(\"Are you sure you want to delete this return?\")'><i class='ti ti-trash'></i></a>
+                                                    </div>
+                                                  </td>";
+                                            echo "</tr>";
+                                        }
+                                    } else {
+                                        echo "<tr><td colspan='8' class='text-center'>No returns found</td></tr>";
+                                    }
+
+                                    function getStatusBadgeClass($status) {
+                                        switch ($status) {
+                                            case 'approved': return 'bg-success';
+                                            case 'pending': return 'bg-warning';
+                                            case 'rejected': return 'bg-danger';
+                                            case 'completed': return 'bg-info';
+                                            default: return 'bg-secondary';
+                                        }
+                                    }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
@@ -238,7 +203,7 @@ $result = mysqli_query($conn, $query);
     </div>
 </div>
 
-<!-- Include DataTables -->
+<!-- DataTables CSS and JS -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
@@ -249,29 +214,45 @@ $result = mysqli_query($conn, $query);
 
 <script>
 $(document).ready(function() {
+    // Initialize DataTable
     $('#returns-table').DataTable({
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'
         ],
-        order: [[0, 'desc']],
-        responsive: true,
-        language: {
-            search: "_INPUT_",
-            searchPlaceholder: "Search returns...",
-            lengthMenu: "Show _MENU_ entries per page",
-            zeroRecords: "No matching returns found",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "Showing 0 to 0 of 0 entries",
-            infoFiltered: "(filtered from _MAX_ total entries)"
-        }
-    }); 
-    
-    // Export button handler
-    $('#export-btn').click(function() {
-        $('#returns-table').DataTable().button('excel').trigger();
+        order: [[1, 'desc']],
+        pageLength: 25,
+        responsive: true
     });
-});
+
+    // Disable end date until start date is selected
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    
+    if (!startDate.value) {
+        endDate.disabled = true;
+    }
+    
+    startDate.addEventListener('change', function() {
+        if (this.value) {
+            endDate.disabled = false;
+            endDate.min = this.value;
+        } else {
+            endDate.disabled = true;
+            endDate.value = '';
+        }
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert-dismissible').fadeTo(1000, 0).slideUp(1000, function(){
+            $(this).alert('close');
+        });
+    }, 5000);
+});  
 </script>
 
-<?php include('include/footer.php'); ?>
+<?php 
+ob_end_flush(); // End output buffering and flush
+include('include/footer.php'); 
+?>

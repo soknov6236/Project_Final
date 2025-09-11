@@ -70,12 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['report_type'])) {
                                             <optgroup label="Sales Reports">
                                                 <option value="sales_summary" <?php echo $report_type == 'sales_summary' ? 'selected' : ''; ?>>Sales Summary</option>
                                                 <option value="sale_report" <?php echo $report_type == 'sale_report' ? 'selected' : ''; ?>>Sale Report</option>
-                                                <option value="sales_by_product" <?php echo $report_type == 'sales_by_product' ? 'selected' : ''; ?>>Sales by Product</option>
+                                                <option value="income_expenses" <?php echo $report_type == 'income_expenses' ? 'selected' : ''; ?>>Income and expenses</option>
                                                 <option value="sales_by_customer" <?php echo $report_type == 'sales_by_customer' ? 'selected' : ''; ?>>Sales by Customer</option>
                                                 <option value="sales_by_payment" <?php echo $report_type == 'sales_by_payment' ? 'selected' : ''; ?>>Sales by Payment Method</option>
                                             </optgroup>
                                             <optgroup label="Inventory Reports">
-                                                <option value="stock_level" <?php echo $report_type == 'stock_level' ? 'selected' : ''; ?>>Stock Level</option>
+                                                <option value="stock_level" <?php echo $report_type == 'stock_level' ? 'selected' : ''; ?>>Product Report</option>
                                                 <option value="inventory_movement" <?php echo $report_type == 'inventory_movement' ? 'selected' : ''; ?>>Inventory Movement</option>
                                                 <option value="expiry_tracking" <?php echo $report_type == 'expiry_tracking' ? 'selected' : ''; ?>>Expiry Tracking</option>
                                             </optgroup>
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['report_type'])) {
                             switch($report_type) {
                                 case 'sales_summary': echo 'Sales Summary Report'; break;
                                 case 'sale_report': echo 'Detailed Sale Report'; break;
-                                case 'sales_by_product': echo 'Sales by Product Report'; break;
+                                case 'income_expenses': echo 'Sales by Product Report'; break;
                                 case 'sales_by_customer': echo 'Sales by Customer Report'; break;
                                 case 'sales_by_payment': echo 'Sales by Payment Method Report'; break;
                                 case 'stock_level': echo 'Stock Level Report'; break;
@@ -135,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['report_type'])) {
                             case 'sale_report':
                                 include('reports/sale_report.php');
                                 break;
-                            case 'sales_by_product':
-                                include('reports/sales_by_product.php');
+                            case 'income_expenses':
+                                include('reports/income_expenses.php');
                                 break;
                             case 'sales_by_customer':
                                 include('reports/sales_by_customer.php');

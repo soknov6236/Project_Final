@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Start output buffering
 session_start();
 if (!isset($_SESSION['logged_in'])) {
     header("Location: login.php");
@@ -66,10 +67,19 @@ if ($supplier_result) {
 
         <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="ti ti-check me-2"></i>
             <?php echo $_SESSION['success_message']; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         <?php unset($_SESSION['success_message']); endif; ?>
+
+        <?php if (isset($_SESSION['error_message'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ti ti-alert-circle me-2"></i>
+            <?php echo $_SESSION['error_message']; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error_message']); endif; ?>
 
         <div class="row">
             <div class="col-12">
@@ -173,7 +183,7 @@ if ($supplier_result) {
                                                     <td>" . number_format($row['subtotal'], 2) . "</td>
                                                     <td>
                                                         <a href='purchase_details.php?id={$row['purchase_id']}' class='btn btn-sm btn-outline-info'>
-                                                            <i class='ti ti-eye'></i>
+                                                            <i class='ti ti-eye'></i> View
                                                         </a>
                                                     </td>
                                                 </tr>";
@@ -209,9 +219,20 @@ $(document).ready(function() {
             'copy', 'csv', 'excel', 'pdf', 'print'
         ],
         order: [[2, 'desc']], // Sort by date descending by default
-        pageLength: 25
+        pageLength: 25,
+        responsive: true
     });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert-dismissible').fadeTo(1000, 0).slideUp(1000, function(){
+            $(this).alert('close');
+        });
+    }, 5000);
 });
 </script>
 
-<?php include('include/footer.php'); ?>
+<?php 
+ob_end_flush(); // End output buffering and flush
+include('include/footer.php'); 
+?>

@@ -13,7 +13,7 @@ $sale_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($sale_id <= 0) {
     $_SESSION['message'] = "Invalid sale ID";
     $_SESSION['message_type'] = "error";
-    header("Location: manage_sale.php");
+    header("Location: sales.php");
     exit();
 }
 
@@ -27,7 +27,7 @@ $sale_result = mysqli_stmt_get_result($stmt);
 if (mysqli_num_rows($sale_result) === 0) {
     $_SESSION['message'] = "Sale not found";
     $_SESSION['message_type'] = "error";
-    header("Location: manage_sale.php");
+    header("Location: sales.php");
     exit();
 }
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (mysqli_stmt_execute($stmt)) {
         $_SESSION['message'] = "Sale updated successfully";
         $_SESSION['message_type'] = "success";
-        header("Location: manage_sale.php?id=" . $sale_id);
+        header("Location: sales.php?id=" . $sale_id);
         exit();
     } else {
         $_SESSION['message'] = "Error updating sale: " . mysqli_error($conn);

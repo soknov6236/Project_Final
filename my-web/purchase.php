@@ -1,5 +1,5 @@
 <?php
-// Start session and check if user is logged in
+ob_start(); // Start output buffering
 session_start();
 if (!isset($_SESSION['logged_in'])) {
     header("Location: login.php");
@@ -53,16 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt = mysqli_prepare($conn, $query);
                 mysqli_stmt_bind_param($stmt, 'ii', $quantity, $product_id);
                 mysqli_stmt_execute($stmt);
-                // Record in inventory log
-                $query = "INSERT INTO inventory_log (product_id, quantity_change, previous_quantity, new_quantity, 
-                        action_type, reference_id, notes, created_by)
-                        VALUES (?, ?, (SELECT stock_quantity FROM products WHERE product_id = ?), 
-                        (SELECT stock_quantity + ? FROM products WHERE product_id = ?), 
-                        'purchase', ?, 'Purchase from supplier', ?)";
-                $stmt = mysqli_prepare($conn, $query);
-                mysqli_stmt_bind_param($stmt, 'iiiiisi', $product_id, $quantity, $product_id, $quantity, $product_id, $purchase_id, $created_by);
-                mysqli_stmt_execute($stmt);
-
             }
         }
         
@@ -74,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         mysqli_commit($conn);
         $_SESSION['success_message'] = "Purchase recorded successfully!";
-        header("Location: purchase.php");
+        // Clear output buffer and redirect
+        ob_end_clean();
+        header("Location: purchase_list.php");
         exit();
     } catch (Exception $e) {
         mysqli_rollback($conn);
@@ -140,7 +132,7 @@ if ($product_result) {
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>New Purchase</h5>
-                        <a href="purchase_history.php" class="btn btn-outline-primary">View Purchase History</a>
+                        <a href="purchase_list.php" class="btn btn-outline-primary">View Purchase History</a>
                     </div>
                     <div class="card-body">
                         <form method="POST" id="purchase-form">
@@ -183,7 +175,7 @@ if ($product_result) {
                                                 <select class="form-select product-select" name="product_id[]" required>
                                                     <option value="">Select Product</option>
                                                     <?php foreach ($products as $product): ?>
-                                                        <option value="<?php echo $product['product_id']; ?>">
+                                                        <option value="<?php echo $product['product_id']; ?>" data-price="<?php echo $product['cost_price'] ?? 0; ?>">
                                                             <?php echo htmlspecialchars($product['product_code'] . ' - ' . $product['name']); ?>
                                                         </option>
                                                     <?php endforeach; ?>
@@ -218,6 +210,7 @@ if ($product_result) {
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                 <button type="submit" class="btn btn-success">Save Purchase</button>
+                                <a href="purchase_list.php" class="btn btn-secondary">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -250,6 +243,19 @@ $(document).ready(function() {
         }
     });
 
+    // Auto-fill unit price when product is selected
+    $(document).on('change', '.product-select', function() {
+        const selectedOption = $(this).find('option:selected');
+        const unitPrice = selectedOption.data('price') || 0;
+        $(this).closest('tr').find('.unit-price').val(unitPrice);
+        
+        // Calculate subtotal
+        const quantity = parseFloat($(this).closest('tr').find('.quantity').val()) || 0;
+        const subtotal = quantity * unitPrice;
+        $(this).closest('tr').find('.subtotal').val(subtotal.toFixed(2));
+        calculateTotal();
+    });
+
     // Calculate subtotal and total
     $(document).on('input', '.quantity, .unit-price', function() {
         const row = $(this).closest('tr');
@@ -268,7 +274,40 @@ $(document).ready(function() {
         });
         $('#total-amount').val(total.toFixed(2));
     }
+    
+    // Form validation
+    $('#purchase-form').on('submit', function(e) {
+        let isValid = true;
+        let errorMessage = '';
+        
+        // Check if at least one item has been added
+        if ($('.purchase-item').length === 0) {
+            isValid = false;
+            errorMessage = 'Please add at least one product to the purchase.';
+        }
+        
+        // Check if all required fields are filled
+        $('.purchase-item').each(function(index) {
+            const product = $(this).find('.product-select').val();
+            const quantity = $(this).find('.quantity').val();
+            const unitPrice = $(this).find('.unit-price').val();
+            
+            if (!product || !quantity || !unitPrice) {
+                isValid = false;
+                errorMessage = 'Please fill in all required fields for all items.';
+                return false; // Break out of the loop
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert(errorMessage);
+        }
+    });
 });
 </script>
 
-<?php include('include/footer.php'); ?>
+<?php 
+ob_end_flush(); // End output buffering and flush
+include('include/footer.php'); 
+?>

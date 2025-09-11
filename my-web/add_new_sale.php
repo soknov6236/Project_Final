@@ -135,7 +135,7 @@ $customers_result = mysqli_query($conn, $customers_query);
                                                     <td colspan="2" class="fw-bold">$<span id="subtotal">0.00</span></td>
                                                 </tr>
                                                 <tr>
-                                                    <td colspan="4" class="text-end fw-bold">Tax (10%)</td>
+                                                    <td colspan="4" class="text-end fw-bold">Tax (0.1%)</td>
                                                     <td colspan="2" class="fw-bold">$<span id="tax">0.00</span></td>
                                                 </tr>
                                                 <tr>
@@ -407,7 +407,7 @@ $(document).ready(function() {
         const discount = parseFloat($('#discount').val()) || 0;
         
         // Calculate tax (10% of subtotal)
-        const tax = subtotal * 0.1;
+        const tax = subtotal * 0.01;
         
         const grandTotal = subtotal + tax - discount;
         
@@ -442,7 +442,7 @@ $(document).ready(function() {
 .product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
+} 
 
 #saleItemsTable tbody tr td {
     vertical-align: middle;
