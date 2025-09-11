@@ -56,23 +56,33 @@ $customers_result = mysqli_query($conn, $customers_query);
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label for="customerSelect" class="form-label">Customer</label>
-                                    <select class="form-select" id="customerSelect" name="customer_id">
-                                        <option value="0">Walk-in Customer</option>
-                                        <?php while ($customer = mysqli_fetch_assoc($customers_result)): ?>
-                                            <option value="<?= $customer['id'] ?>">
-                                                <?= htmlspecialchars($customer['customer_name']) ?>
-                                            </option>
-                                        <?php endwhile; ?>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-select" id="customerSelect" name="customer_id">
+                                            <option value="0">Walk-in Customer</option>
+                                            <?php while ($customer = mysqli_fetch_assoc($customers_result)): ?>
+                                                <option value="<?= $customer['id'] ?>">
+                                                    <?= htmlspecialchars($customer['customer_name']) ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                                            <i class="ti ti-plus"></i> New Customer
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="paymentMethod" class="form-label">Payment Method</label>
                                     <select class="form-select" id="paymentMethod" name="payment_method">
                                         <option value="cash">Cash</option>
-                                        <option value="credit_card">Credit Card</option>
-                                        <option value="debit_card">Debit Card</option>
-                                        <option value="online">Online Payment</option>
+                                        <option value="qr_code">QR Code</option>
+                                        <option value="debit_card">Other</option>
                                     </select>
+                                    
+                                    <!-- QR Code Image (initially hidden) -->
+                                    <div id="qrCodeContainer" class="mt-3 text-center" style="display: none;">
+                                        <img src="../assets/images/QRCode.jpg" alt="QR Code" class="img-fluid" style="max-height: 100px;">
+                                        <p class="small text-muted mt-2">Scan this QR code to complete payment</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -135,8 +145,17 @@ $customers_result = mysqli_query($conn, $customers_query);
                                                     <td colspan="2" class="fw-bold">$<span id="subtotal">0.00</span></td>
                                                 </tr>
                                                 <tr>
-                                                    <td colspan="4" class="text-end fw-bold">Tax (0.1%)</td>
-                                                    <td colspan="2" class="fw-bold">$<span id="tax">0.00</span></td>
+                                                    <td colspan="4" class="text-end fw-bold">Tax</td>
+                                                    <td colspan="2">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">%</span>
+                                                            <input type="number" class="form-control" id="taxRate" 
+                                                                   name="tax_rate" value="0.1" min="0" step="0.01">
+                                                            <span class="input-group-text">$</span>
+                                                            <input type="number" class="form-control" id="taxAmount" 
+                                                                   name="tax_amount" value="0.00" readonly>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td colspan="4" class="text-end fw-bold">Discount</td>
@@ -177,8 +196,92 @@ $customers_result = mysqli_query($conn, $customers_query);
     </div>
 </div>
 
-<!-- Include jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- New Customer Modal -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newCustomerModalLabel">Add New Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    <div class="alert alert-danger d-none" id="customerErrorMsg"></div>
+                    <div class="mb-3">
+                        <label for="customerName" class="form-label">Customer Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="customerName" name="customer_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customerEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="customerEmail" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="customerPhone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="customerPhone" name="mobile_phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="customerAddress" class="form-label">Address</label>
+                        <textarea class="form-control" id="customerAddress" name="address" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Details Modal -->
+<div class="modal fade" id="productDetailsModal" tabindex="-1" aria-labelledby="productDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productDetailsModalLabel">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img id="detailProductImage" src="" class="img-fluid rounded" alt="Product Image" style="max-height: 200px;">
+                    </div>
+                    <div class="col-md-8">
+                        <h4 id="detailProductName"></h4>
+                        <p class="text-muted" id="detailProductCode"></p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Price:</strong> $<span id="detailProductPrice"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Stock:</strong> <span id="detailProductStock"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Color:</strong> <span id="detailProductColor">N/A</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Size:</strong> <span id="detailProductSize">N/A</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Description:</strong>
+                            <p id="detailProductDescription" class="mt-1">No description available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="addFromDetails">Add to Sale</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 $(document).ready(function() {
@@ -216,6 +319,151 @@ $(document).ready(function() {
         $('#productResults').hide();
     });
     
+    // Payment method change handler
+    $('#paymentMethod').change(function() {
+        const method = $(this).val();
+        
+        if (method === 'qr_code') {
+            $('#qrCodeContainer').show();
+        } else {
+            $('#qrCodeContainer').hide();
+        }
+    });
+
+    // Save new customer
+    $('#saveCustomerBtn').click(function() {
+        let valid = true;
+        $('#newCustomerForm input[required]').each(function() {
+            if ($(this).val().trim() === '') {
+                $(this).addClass('is-invalid');
+                valid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        const email = $('#customerEmail').val().trim();
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            $('#customerEmail').addClass('is-invalid');
+            valid = false;
+        } else {
+            $('#customerEmail').removeClass('is-invalid');
+        }
+        if (!valid) return;
+
+        // Hide error message
+        $('#customerErrorMsg').addClass('d-none').text('');
+
+        const customerName = $('#customerName').val().trim();
+        const customerEmail = $('#customerEmail').val().trim();
+        const customerPhone = $('#customerPhone').val().trim();
+        const customerAddress = $('#customerAddress').val().trim();
+
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+        $.ajax({
+            url: 'customers/add_customer_sale.php',
+            type: 'POST',
+            data: {
+                customer_name: customerName,
+                email: customerEmail,
+                mobile_phone: customerPhone,
+                address: customerAddress
+            },
+            dataType: 'json',
+            success: function(response) {
+                $('#saveCustomerBtn').prop('disabled', false).html('Save Customer');
+                if (response.status === 'success') {
+                    $('#customerSelect').append(
+                        $('<option>', {
+                            value: response.customer_id,
+                            text: customerName,
+                            selected: true
+                        })
+                    );
+                    $('#newCustomerModal').modal('hide');
+                    $('#newCustomerForm')[0].reset();
+                    showAlert('Customer added successfully!', 'success');
+                } else {
+                    $('#customerErrorMsg').removeClass('d-none').text(response.message || 'Error adding customer.');
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#saveCustomerBtn').prop('disabled', false).html('Save Customer');
+                $('#customerErrorMsg').removeClass('d-none').text('Error: ' + error);
+            }
+        });
+    });
+
+    // View product details
+    $(document).on('click', '.view-details', function() {
+        const productCard = $(this).closest('.product-card');
+        const productId = productCard.data('id');
+        const productName = productCard.data('name');
+        const price = parseFloat(productCard.data('price'));
+        const stock = parseInt(productCard.data('stock'));
+        const image = productCard.data('image');
+        const color = productCard.data('color');
+        const size = productCard.data('size');
+        const description = productCard.data('description');
+        const code = productCard.data('code');
+        
+        // Populate modal with product details
+        $('#detailProductName').text(productName);
+        $('#detailProductCode').text('Code: ' + code);
+        $('#detailProductPrice').text(price.toFixed(2));
+        $('#detailProductStock').text(stock);
+        $('#detailProductColor').text(color || 'N/A');
+        $('#detailProductSize').text(size || 'N/A');
+        $('#detailProductDescription').text(description || 'No description available');
+        
+        // Set product image
+        if (image) {
+            $('#detailProductImage').attr('src', 'uploads/products/' + image);
+        } else {
+            $('#detailProductImage').attr('src', '');
+            $('#detailProductImage').html('<div class="bg-light d-flex align-items-center justify-content-center h-100"><i class="ti ti-photo" style="font-size: 3rem;"></i></div>');
+        }
+        
+        // Store product ID for the "Add to Sale" button
+        $('#productDetailsModal').data('product-id', productId);
+    });
+
+    // Add product to cart from details modal
+    $('#addFromDetails').click(function() {
+        const productId = $('#productDetailsModal').data('product-id');
+        const productCard = $(`.product-card[data-id="${productId}"]`);
+        
+        if (productCard.length) {
+            // Simulate click on the add-to-cart button
+            productCard.find('.add-to-cart').click();
+        }
+        
+        // Close the modal
+        $('#productDetailsModal').modal('hide');
+    });
+
+    // Show alert function
+    function showAlert(message, type) {
+        // Remove any existing alerts
+        $('.alert-dismissible').remove();
+        
+        // Create alert
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // Prepend alert to content
+        $('.pc-content').prepend(alertHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            $('.alert-dismissible').alert('close');
+        }, 5000);
+    }
+
     // Search products function
     function searchProducts(searchTerm) {
         if (searchTerm.length < 2) {
@@ -238,7 +486,9 @@ $(document).ready(function() {
                         <div class="col-md-3 mb-3">
                             <div class="card product-card" data-id="${product.product_id}" 
                                  data-name="${product.product_name}" data-price="${product.selling_price}" 
-                                 data-stock="${product.stock}" data-image="${product.image}">
+                                 data-stock="${product.stock}" data-image="${product.image}"
+                                 data-color="${product.color || ''}" data-size="${product.size || ''}"
+                                 data-description="${product.description || ''}" data-code="${product.product_code}">
                                 <div class="card-body text-center">
                                     ${product.image ? 
                                         `<img src="uploads/products/${product.image}" alt="${product.product_name}" 
@@ -250,13 +500,27 @@ $(document).ready(function() {
                                     <h6 class="card-title">${product.product_name}</h6>
                                     <p class="card-text mb-1">$${parseFloat(product.selling_price).toFixed(2)}</p>
                                     <p class="card-text text-muted small mb-2">Code: ${product.product_code}</p>
+                                    
+                                    <!-- Display Color and Size if available -->
+                                    ${product.color ? `<p class="card-text small mb-1"><strong>Color:</strong> ${product.color}</p>` : ''}
+                                    ${product.size ? `<p class="card-text small mb-1"><strong>Size:</strong> ${product.size}</p>` : ''}
+                                    
                                     <p class="card-text small ${product.stock > 0 ? 'text-success' : 'text-danger'}">
                                         ${product.stock > 0 ? `In Stock: ${product.stock}` : 'Out of Stock'}
                                     </p>
-                                    <button type="button" class="btn btn-sm btn-primary add-to-cart" 
-                                        ${product.stock < 1 ? 'disabled' : ''}>
-                                        <i class="ti ti-shopping-cart-plus me-1"></i> Add to Sale
-                                    </button>
+                                    
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button type="button" class="btn btn-sm btn-primary add-to-cart" 
+                                            ${product.stock < 1 ? 'disabled' : ''}>
+                                            <i class="ti ti-shopping-cart-plus me-1"></i>
+                                        </button>
+                                        
+                                        <!-- View Details Button -->
+                                        <button type="button" class="btn btn-sm btn-info view-details" 
+                                            data-bs-toggle="modal" data-bs-target="#productDetailsModal">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>`;
@@ -345,8 +609,8 @@ $(document).ready(function() {
         updateCartDisplay();
     });
     
-    // Update discount and totals
-    $('#discount').on('input', updateTotals);
+    // Update discount, tax and totals
+    $('#discount, #taxRate').on('input', updateTotals);
     
     // Cancel sale
     $('#cancelSale').click(function() {
@@ -405,13 +669,14 @@ $(document).ready(function() {
     function updateTotals() {
         const subtotal = parseFloat($('#subtotal').text()) || 0;
         const discount = parseFloat($('#discount').val()) || 0;
+        const taxRate = parseFloat($('#taxRate').val()) || 0;
         
-        // Calculate tax (10% of subtotal)
-        const tax = subtotal * 0.01;
+        // Calculate tax amount
+        const taxAmount = subtotal * (taxRate / 100);
         
-        const grandTotal = subtotal + tax - discount;
+        const grandTotal = subtotal + taxAmount - discount;
         
-        $('#tax').text(tax.toFixed(2));
+        $('#taxAmount').val(taxAmount.toFixed(2));
         $('#grandTotal').text(grandTotal.toFixed(2));
     }
     
@@ -470,6 +735,32 @@ $(document).ready(function() {
 #saleItemsTable tbody tr td:nth-child(3),
 #saleItemsTable tbody tr td:nth-child(5) {
     text-align: right;
+}
+
+.input-group > .form-select {
+    flex: 1;
+}
+
+.modal-content {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 10px 10px 0 0;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #4a4a4a;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 10px 10px;
 }
 </style>
 

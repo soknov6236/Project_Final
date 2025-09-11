@@ -108,7 +108,7 @@ try {
     $_SESSION['message'] = "Sale completed successfully! Invoice: $invoice_number";
     $_SESSION['message_type'] = 'success';
     $_SESSION['last_sale_id'] = $sale_id;
-    header("Location: print_add_invoice.php?id=$sale_id");
+    header("Location: print_invoice_sale.php?id=$sale_id");
     exit();
 
 } catch (Exception $e) {

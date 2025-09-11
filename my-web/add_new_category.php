@@ -28,7 +28,7 @@ include('include/topbar.php');
             </div>
         </div>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
                         <h4>Category Information</h4>
@@ -43,9 +43,10 @@ include('include/topbar.php');
                                 <label for="text" class="form-label">description</label>
                                 <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <button type="submit" class="btn btn-outline-primary">Save Category</button>
-                                <a href="category.php" class="btn btn-outline-danger">Cancel</a>
+                            <div class="d-flex justify-content-left gap-3 mt-4 pt-3">
+                                <button type="submit" class="btn btn-primary px-4 py-2">Save Category</button>
+                                <a href="category.php" class="btn btn-outline-danger">
+                                    <i class="fas fa-times me-2"></i>Cancel</a>
                             </div>
                         </form>
                     </div>

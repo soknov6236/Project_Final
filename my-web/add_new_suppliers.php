@@ -71,20 +71,28 @@ include('include/topbar.php');
         <?php endif; ?>
         
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
                         <h4>Supplier Information</h4>
                     </div>
                     <div class="card-body">
                         <form method="post" id="suppliersForm">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Supplier Name *</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Supplier Name *</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                            <label for="phone" class="form-label">Phone</label>
+                                            <input type="tel" class="form-control" id="phone" name="phone">
+                                        
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="address" class="form-label">Address</label>
@@ -97,9 +105,10 @@ include('include/topbar.php');
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <button type="submit" class="btn btn-outline-primary" id="submitBtn">Save Supplier</button>
-                                <a href="suppliers.php" class="btn btn-outline-danger">Cancel</a>
+                            <div class="d-flex justify-content-left gap-3 mt-4 pt-3">
+                                <button type="submit" class="btn btn-primary px-4 py-2" id="submitBtn">Save Supplier</button>
+                                <a href="suppliers.php" class="btn btn-outline-danger">
+                                    <i class="fas fa-times me-2"></i>Cancel</a>
                             </div>
                         </form>
                     </div>

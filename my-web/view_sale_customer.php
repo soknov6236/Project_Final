@@ -173,7 +173,9 @@ include('include/topbar.php');
                 </tbody>
             </table>
             <div class="mt-3">
-                <a href="manage_sale.php" class="btn btn-secondary">Back to Sales</a>
+                  <?php if (!empty($sale['customer_id'])): ?>
+                        <a href="view_customer.php?id=<?= $sale['customer_id'] ?>" class="btn btn-secondary" title="View Customer">Back to View</a>
+                    <?php endif; ?>
                 <a href="edit_sale.php?id=<?= $sale_id ?>" class="btn btn-primary">Edit Sale</a>
             </div>
                 </div>

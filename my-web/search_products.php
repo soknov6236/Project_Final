@@ -20,7 +20,10 @@ $query = "SELECT
             name AS product_name, 
             sale_price AS selling_price, 
             stock_quantity AS stock, 
-            image 
+            image,
+            color,
+            size,
+            description
           FROM products 
           WHERE 
             product_code LIKE ? OR 

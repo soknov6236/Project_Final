@@ -9,6 +9,14 @@ include('include/connect.php');
 include('include/header.php');
 include('include/sidebar.php');
 include('include/topbar.php');
+
+// Fetch all categories for the filter dropdown
+$category_query = "SELECT DISTINCT category_name FROM products ORDER BY category_name";
+$category_result = mysqli_query($conn, $category_query);
+$categories = [];
+while ($row = mysqli_fetch_assoc($category_result)) {
+    $categories[] = $row['category_name'];
+}
 ?>
 <!-- [ Main Content ] start -->
 <div class="pc-container">
@@ -54,9 +62,32 @@ include('include/topbar.php');
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <a href="add_new_products.php" class="btn btn-outline-info">
-                            <i class="ti ti-plus"></i> Add Product
-                        </a>
+                        <div class="d-flex align-items-center">
+                            <a href="add_new_products.php" class="btn btn-outline-info me-3">
+                                <i class="ti ti-plus"></i> Add Product
+                            </a>
+                            
+                            <!-- Category Filter -->
+                            <div class="d-flex align-items-center">
+                                <label for="category-filter" class="me-2 mb-0">Filter by Category:</label>
+                                <select id="category-filter" class="form-select form-select-sm" style="width: 200px;">
+                                    <option value="">All Categories</option>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?php echo htmlspecialchars($category); ?>" 
+                                            <?php if (isset($_GET['category']) && $_GET['category'] == $category) echo 'selected'; ?>>
+                                            <?php echo htmlspecialchars($category); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                
+                                <!-- Clear Filter Button (visible only when a filter is applied) -->
+                                <?php if (isset($_GET['category']) && !empty($_GET['category'])): ?>
+                                <a href="products.php" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="ti ti-x"></i> Clear Filter
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -100,7 +131,7 @@ include('include/topbar.php');
                                             WHERE 1=1";
                                     
                                     // Add category filter if specified
-                                    if (isset($_GET['category'])) {
+                                    if (isset($_GET['category']) && !empty($_GET['category'])) {
                                         $category_name = mysqli_real_escape_string($conn, $_GET['category']);
                                         $sql .= " AND p.category_name = '$category_name'";
                                     }
@@ -149,7 +180,10 @@ include('include/topbar.php');
                                     }
                                     
                                     if ($no_results) {
-                                        echo "<tr><td colspan='13' class='text-center'>No products found</td></tr>";
+                                        $message = isset($_GET['category']) ? 
+                                            "No products found in category: " . htmlspecialchars($_GET['category']) : 
+                                            "No products found";
+                                        echo "<tr><td colspan='14' class='text-center'>$message</td></tr>";
                                     }
                                     
                                     mysqli_close($conn);
@@ -180,6 +214,16 @@ $(document).ready(function() {
             $(this).alert('close');
         });
     }, 5000);
+    
+    // Category filter change event
+    $('#category-filter').change(function() {
+        const category = $(this).val();
+        if (category) {
+            window.location.href = 'products.php?category=' + encodeURIComponent(category);
+        } else {
+            window.location.href = 'products.php';
+        }
+    });
     
     $('.delete-btn').click(function() {
         if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {

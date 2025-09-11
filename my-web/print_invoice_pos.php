@@ -30,8 +30,8 @@ if (mysqli_num_rows($sale_result) === 0) {
 
 $sale = mysqli_fetch_assoc($sale_result);
 
-// Fetch sale items with product codes
-$items_query = "SELECT si.*, p.name as product_name, p.product_code 
+// Fetch sale items with product codes, color, and size
+$items_query = "SELECT si.*, p.name as product_name, p.product_code, p.color, p.size 
                 FROM sale_items si
                 JOIN products p ON si.product_id = p.product_id
                 WHERE si.sale_id = ?";
@@ -68,24 +68,24 @@ $logo_path = "../assets/images/logo_report_icon.png";
         .header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             border-bottom: 1px solid #eee;
-            padding-bottom: 20px;
+            padding-bottom: 18px;
         }
         .logo {
-            max-width: 150px;
-            max-height: 80px;
+            max-width: 130px;
+            max-height: 65px;
         }
         .invoice-info {
             text-align: right;
         }
         .invoice-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             margin-bottom: 10px;
         }
         .invoice-number {
-            font-size: 18px;
+            font-size: 16px;
             margin-bottom: 5px;
         }
         .date {
@@ -94,14 +94,14 @@ $logo_path = "../assets/images/logo_report_icon.png";
         .from-to {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .from, .to {
             width: 48%;
         }
         .section-title {
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
         }
@@ -112,12 +112,12 @@ $logo_path = "../assets/images/logo_report_icon.png";
         }
         th {
             text-align: left;
-            padding: 10px;
+            padding: 8px;
             background-color: #f5f5f5;
             border-bottom: 1px solid #ddd;
         }
         td {
-            padding: 10px;
+            padding: 8px;
             border-bottom: 1px solid #eee;
         }
         .text-right {
@@ -234,6 +234,8 @@ $logo_path = "../assets/images/logo_report_icon.png";
                     <th>#</th>
                     <th>Product Name</th>
                     <th>Code</th>
+                    <th>Color</th>
+                    <th>Size</th>
                     <th class="text-right">Price</th>
                     <th class="text-right">Qty</th>
                     <th class="text-right">Total</th>
@@ -247,6 +249,8 @@ $logo_path = "../assets/images/logo_report_icon.png";
                     echo "<td>" . $counter++ . "</td>";
                     echo "<td>" . htmlspecialchars($item['product_name']) . "</td>";
                     echo "<td>" . htmlspecialchars($item['product_code']) . "</td>";
+                    echo "<td>" . (!empty($item['color']) ? htmlspecialchars($item['color']) : 'N/A') . "</td>";
+                    echo "<td>" . (!empty($item['size']) ? htmlspecialchars($item['size']) : 'N/A') . "</td>";
                     echo "<td class='text-right'>$" . number_format($item['price'], 2) . "</td>";
                     echo "<td class='text-right'>" . $item['quantity'] . "</td>";
                     echo "<td class='text-right'>$" . number_format($item['total'], 2) . "</td>";
@@ -263,7 +267,7 @@ $logo_path = "../assets/images/logo_report_icon.png";
                     <td class="text-right">$<?= number_format($sale['total'] - $sale['tax'] + $sale['discount'], 2) ?></td>
                 </tr>
                 <tr>
-                    <td>Tax (10%):</td>
+                    <td>Tax:</td>
                     <td class="text-right">$<?= number_format($sale['tax'], 2) ?></td>
                 </tr>
                 <?php if ($sale['discount'] > 0): ?>
@@ -280,7 +284,11 @@ $logo_path = "../assets/images/logo_report_icon.png";
                     <td>Payment Method:</td>
                     <td class="text-right"><?= ucfirst($sale['payment_method']) ?></td>
                 </tr>
+
             </table>
+            <div>
+                    <img src="../assets/images/QRCode.jpg" alt="QR Code" class="img-fluid" style="max-height: 80px;">
+                </div>
         </div>
 
         <?php if (!empty($sale['notes'])): ?>

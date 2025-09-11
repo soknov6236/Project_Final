@@ -9,6 +9,19 @@ include('include/connect.php');
 include('include/header.php');
 include('include/sidebar.php');
 include('include/topbar.php');
+
+// Fetch all categories for the filter dropdown
+$category_query = "SELECT DISTINCT category_name FROM products ORDER BY category_name";
+$category_result = mysqli_query($conn, $category_query);
+$categories = [];
+while ($row = mysqli_fetch_assoc($category_result)) {
+    $categories[] = $row['category_name'];
+}
+
+// Get current filter values
+$current_filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+$current_category = isset($_GET['category']) ? $_GET['category'] : '';
+$current_status = isset($_GET['status']) ? $_GET['status'] : 'all';
 ?>
 
 <!-- [ Main Content ] start -->
@@ -41,29 +54,109 @@ include('include/topbar.php');
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>Current Stock Levels</h5>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-filter"></i> Filter
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="?filter=all">All Products</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="?filter=low">Low Stock (< 10)</a></li>
-                                <li><a class="dropdown-item" href="?filter=out">Out of Stock</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <?php
-                                $category_query = "SELECT * FROM category";
-                                $category_result = mysqli_query($conn, $category_query);
-                                if ($category_result) {
-                                    while ($cat = mysqli_fetch_assoc($category_result)) {
-                                        echo '<li><a class="dropdown-item" href="?category='.urlencode($cat['name']).'">'.$cat['name'].'</a></li>';
-                                    }
-                                }
-                                ?>
-                            </ul>
+                        <button type="button" class="btn btn-outline-info" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                            <i class="ti ti-filter"></i> Advanced Filters
+                        </button>
+                    </div>
+                    
+                    <!-- Advanced Filter Section -->
+                    <div class="collapse <?php echo (isset($_GET['filter']) || isset($_GET['category']) || isset($_GET['status'])) ? 'show' : ''; ?>" id="filterCollapse">
+                        <div class="card-body border-bottom">
+                            <form method="GET" action="products_stock.php" class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="filter" class="form-label">Stock Level</label>
+                                    <select class="form-select" id="filter" name="filter">
+                                        <option value="all" <?php echo $current_filter == 'all' ? 'selected' : ''; ?>>All Products</option>
+                                        <option value="low" <?php echo $current_filter == 'low' ? 'selected' : ''; ?>>Low Stock (< 10)</option>
+                                        <option value="out" <?php echo $current_filter == 'out' ? 'selected' : ''; ?>>Out of Stock</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">All Categories</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?php echo htmlspecialchars($category); ?>" 
+                                                <?php echo $current_category == $category ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($category); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="status" class="form-label">Stock Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="all" <?php echo $current_status == 'all' ? 'selected' : ''; ?>>All Statuses</option>
+                                        <option value="in_stock" <?php echo $current_status == 'in_stock' ? 'selected' : ''; ?>>In Stock</option>
+                                        <option value="low_stock" <?php echo $current_status == 'low_stock' ? 'selected' : ''; ?>>Low Stock</option>
+                                        <option value="out_of_stock" <?php echo $current_status == 'out_of_stock' ? 'selected' : ''; ?>>Out of Stock</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                                    <a href="products_stock.php" class="btn btn-outline-secondary">Clear All</a>
+                                </div>
+                            </form>
                         </div>
                     </div>
+                    
                     <div class="card-body">
+                        <!-- Summary Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Total Products</h6>
+                                        <?php
+                                        $total_query = "SELECT COUNT(*) as total FROM products";
+                                        $total_result = mysqli_query($conn, $total_query);
+                                        $total = mysqli_fetch_assoc($total_result)['total'];
+                                        ?>
+                                        <h3 class="card-text"><?php echo $total; ?></h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title">In Stock</h6>
+                                        <?php
+                                        $in_stock_query = "SELECT COUNT(*) as count FROM products WHERE stock_quantity > 10";
+                                        $in_stock_result = mysqli_query($conn, $in_stock_query);
+                                        $in_stock = mysqli_fetch_assoc($in_stock_result)['count'];
+                                        ?>
+                                        <h3 class="card-text"><?php echo $in_stock; ?></h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Low Stock</h6>
+                                        <?php
+                                        $low_stock_query = "SELECT COUNT(*) as count FROM products WHERE stock_quantity > 0 AND stock_quantity < 10";
+                                        $low_stock_result = mysqli_query($conn, $low_stock_query);
+                                        $low_stock = mysqli_fetch_assoc($low_stock_result)['count'];
+                                        ?>
+                                        <h3 class="card-text"><?php echo $low_stock; ?></h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-danger text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Out of Stock</h6>
+                                        <?php
+                                        $out_of_stock_query = "SELECT COUNT(*) as count FROM products WHERE stock_quantity <= 0";
+                                        $out_of_stock_result = mysqli_query($conn, $out_of_stock_query);
+                                        $out_of_stock = mysqli_fetch_assoc($out_of_stock_result)['count'];
+                                        ?>
+                                        <h3 class="card-text"><?php echo $out_of_stock; ?></h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="table table-striped" id="stock-table">
                                 <thead>
@@ -95,7 +188,7 @@ include('include/topbar.php');
                                             FROM products p
                                             WHERE 1=1";
                                     
-                                    // Add filters
+                                    // Add stock level filter
                                     if (isset($_GET['filter'])) {
                                         $filter = mysqli_real_escape_string($conn, $_GET['filter']);
                                         if ($filter == 'low') {
@@ -106,9 +199,21 @@ include('include/topbar.php');
                                     }
                                     
                                     // Add category filter if specified
-                                    if (isset($_GET['category'])) {
+                                    if (isset($_GET['category']) && !empty($_GET['category'])) {
                                         $category_name = mysqli_real_escape_string($conn, $_GET['category']);
                                         $sql .= " AND p.category_name = '$category_name'";
+                                    }
+                                    
+                                    // Add status filter if specified
+                                    if (isset($_GET['status']) && $_GET['status'] != 'all') {
+                                        $status = mysqli_real_escape_string($conn, $_GET['status']);
+                                        if ($status == 'in_stock') {
+                                            $sql .= " AND p.stock_quantity > 10";
+                                        } elseif ($status == 'low_stock') {
+                                            $sql .= " AND p.stock_quantity > 0 AND p.stock_quantity < 10";
+                                        } elseif ($status == 'out_of_stock') {
+                                            $sql .= " AND p.stock_quantity <= 0";
+                                        }
                                     }
                                     
                                     $sql .= " ORDER BY p.stock_quantity ASC";
@@ -163,7 +268,7 @@ include('include/topbar.php');
                                     }
                                     
                                     if ($no_results) {
-                                        echo "<tr><td colspan='10' class='text-center'>No products found</td></tr>";
+                                        echo "<tr><td colspan='10' class='text-center'>No products found with the selected filters</td></tr>";
                                     }
                                     
                                     mysqli_close($conn);
@@ -219,6 +324,11 @@ $(document).ready(function() {
             );
         }
     });
+    
+    // Show filter section if URL parameters are present
+    <?php if (isset($_GET['filter']) || isset($_GET['category']) || isset($_GET['status'])): ?>
+    $('#filterCollapse').collapse('show');
+    <?php endif; ?>
 }); 
 </script>
 

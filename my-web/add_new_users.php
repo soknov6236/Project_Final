@@ -92,7 +92,7 @@ unset($_SESSION['error_message']);
         </div>
 
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h4>User Information</h4>
@@ -123,7 +123,7 @@ unset($_SESSION['error_message']);
                                     <div class="mb-3">
                                         <label for="password" class="form-label">Password *</label>
                                         <input type="password" class="form-control" id="password" name="password" required minlength="8">
-                                        <small class="text-muted">Minimum 8 characters</small>
+                                        <div class="form-text">Minimum 8 characters</div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -139,9 +139,14 @@ unset($_SESSION['error_message']);
                                 <input type="email" class="form-control" id="email" name="email" required>
                             </div>
                             
-                            <div class="d-flex justify-content-between">
-                                <button type="submit" class="btn btn-primary">Save User</button>
-                                <a href="users.php" class="btn btn-outline-danger">Cancel</a>
+                            <!-- Centered buttons with improved styling -->
+                            <div class="d-flex justify-content-left gap-3 mt-4 pt-3">
+                                <button type="submit" class="btn btn-primary px-4 py-2">
+                                    <i class="fas fa-user-plus me-2"></i>Save User
+                                </button>
+                                <a href="users.php" class="btn btn-outline-danger px-4 py-2">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
                             </div>
                         </form>
                     </div>
@@ -151,7 +156,7 @@ unset($_SESSION['error_message']);
     </div>
 </div>
 
-<script> 
+<script>
 $(document).ready(function() {
     // Password match validation
     $('#password, #confirm_password').on('keyup', function() {
@@ -162,26 +167,19 @@ $(document).ready(function() {
         }
     });
 
-    // Form submission
-    $("#userForm").on("submit", function(e) {
-        e.preventDefault();
+    // Form submission - remove AJAX since processing is in same file
+    $("#userForm").on("submit", function() {
+        // Clear any previous custom validation messages
+        $('#confirm_password').get(0).setCustomValidity('');
         
-        $.ajax({
-            url: "users/add_users.php",
-            type: "POST",
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    window.location.href = "users.php?success=" + encodeURIComponent(response.message);
-                } else {
-                    window.location.href = "add_new_users.php?error=" + encodeURIComponent(response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                window.location.href = "add_new_users.php?error=" + encodeURIComponent(error);
-            }
-        });
+        // Check if passwords match
+        if ($('#password').val() !== $('#confirm_password').val()) {
+            $('#confirm_password').get(0).setCustomValidity("Passwords don't match");
+            return false;
+        }
+        
+        // If validation passes, the form will submit normally
+        return true;
     });
 });
 </script>

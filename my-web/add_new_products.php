@@ -251,10 +251,10 @@ if (isset($_SESSION['form_errors'])) {
                                 
                                 <div class="row mt-4">
                                     <div class="col-md-12 text-center">
-                                        <button type="submit" class="btn btn-primary mr-2">
+                                        <button type="submit" class="btn btn-primary me-2">
                                             <i class="ti ti-save"></i> Save Product
                                         </button>
-                                        <button type="reset" class="btn btn-secondary">
+                                        <button type="reset" class="btn btn-secondary me-2">
                                             <i class="ti ti-rotate-2"></i> Reset
                                         </button>
                                         <a href="products.php" class="btn btn-outline-danger">

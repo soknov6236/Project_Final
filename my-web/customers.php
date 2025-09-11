@@ -68,12 +68,15 @@ include('include/topbar.php');
                                                 <td>{$row['address']}</td>
                                                 <td>".date('M d, Y', strtotime($row['created_at']))."</td>
                                                 <td>
-                                                    <a href='edit_customer.php?id={$row['id']}' class='btn btn-sm btn-outline-primary'>
+                                                    <a href='edit_customer.php?id={$row['id']}' class='btn btn-sm btn-outline-primary' title='Edit'>
                                                         <i class='ti ti-edit'></i>
                                                     </a>
-                                                    <button class='btn btn-sm btn-outline-danger delete-btn' data-id='{$row['id']}'>
+                                                    <button class='btn btn-sm btn-outline-danger delete-btn' data-id='{$row['id']}' title='Delete'>
                                                         <i class='ti ti-trash'></i>
                                                     </button>
+                                                    <a href='view_customer.php?id={$row['id']}' class='btn btn-sm btn-outline-info' title='View Details'>
+                                                        <i class='ti ti-eye'></i>
+                                                    </a>                                                    
                                                 </td>
                                             </tr>";
                                     }

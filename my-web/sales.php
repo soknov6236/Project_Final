@@ -22,13 +22,17 @@ if (isset($_SESSION['message'])) {
 }
 // Display success message
 if (isset($_SESSION['success_message'])) {
-    echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+    echo '<div class="alert alert-success alert-dismissible fade show" role="alert">' . $_SESSION['success_message'] . '
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
     unset($_SESSION['success_message']);
 }
 
 // Display error message
 if (isset($_SESSION['error_message'])) {
-    echo '<div class="alert alert-error">' . $_SESSION['error_message'] . '</div>';
+    echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">' . $_SESSION['error_message'] . '
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
     unset($_SESSION['error_message']);
 }
 
@@ -74,7 +78,7 @@ if (isset($_SESSION['error_message'])) {
                                         <th>Invoice #</th>
                                         <th>Date</th>
                                         <th>Customer</th>
-                                        <th>Product Code</th>
+                                        <th>Products</th>
                                         <th>Total</th>
                                         <th>Payment</th>
                                         <th>Status</th>
@@ -83,9 +87,9 @@ if (isset($_SESSION['error_message'])) {
                                 </thead>
                                 <tbody>
                                     <?php
+                                    // Improved query to get sales with product information
                                     $query = "SELECT s.*, c.customer_name, 
-                                              GROUP_CONCAT(DISTINCT si.product_name SEPARATOR ', ') as product_names,
-                                              GROUP_CONCAT(DISTINCT p.product_code SEPARATOR ', ') as product_codes
+                                              GROUP_CONCAT(DISTINCT CONCAT(p.product_code, ' (', si.quantity, ')') SEPARATOR ', ') as product_info
                                               FROM sales s
                                               LEFT JOIN customers c ON s.customer_id = c.id
                                               LEFT JOIN sale_items si ON s.id = si.sale_id
@@ -100,7 +104,7 @@ if (isset($_SESSION['error_message'])) {
                                             echo "<td>" . htmlspecialchars($row['invoice_number']) . "</td>";
                                             echo "<td>" . date('M d, Y h:i A', strtotime($row['date'])) . "</td>";
                                             echo "<td>" . htmlspecialchars($row['customer_name'] ?: 'Walk-in Customer') . "</td>";
-                                            echo "<td>" . htmlspecialchars($row['product_codes'] ?: 'N/A') . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['product_info'] ?: 'N/A') . "</td>";
                                             echo "<td>$" . number_format($row['total'], 2) . "</td>";
                                             echo "<td>" . htmlspecialchars(ucfirst($row['payment_method'])) . "</td>";
                                             echo "<td><span class='badge " . getStatusBadgeClass($row['payment_status']) . "'>" . ucfirst($row['payment_status']) . "</span></td>";
@@ -108,14 +112,14 @@ if (isset($_SESSION['error_message'])) {
                                                     <div class='btn-group' role='group'>
                                                         <a href='view_sale_mange.php?id=" . $row['id'] . "' class='btn btn-info btn-sm' title='View'><i class='ti ti-eye'></i></a>
                                                         <a href='edit_sale.php?id=" . $row['id'] . "' class='btn btn-warning btn-sm' title='Edit'><i class='ti ti-edit'></i></a>
-                                                        <a href='print_invoice.php?id=" . $row['id'] . "' class='btn btn-secondary btn-sm' title='Print' target='_blank'><i class='ti ti-printer'></i></a>
+                                                        <a href='print_invoice_sale.php?id=" . $row['id'] . "' class='btn btn-secondary btn-sm' title='Print' target='_blank'><i class='ti ti-printer'></i></a>
                                                         <a href='delete_sales.php?id=" . $row['id'] . "' class='btn btn-danger btn-sm' title='Delete' onclick='return confirm(\"Are you sure you want to delete this sale?\")'><i class='ti ti-trash'></i></a>
                                                     </div>
                                                   </td>";
                                             echo "</tr>";
                                         }
                                     } else {
-                                        echo "<tr><td colspan='9' class='text-center'>No sales found</td></tr>";
+                                        echo "<tr><td colspan='8' class='text-center'>No sales found</td></tr>";
                                     }
 
                                     function getStatusBadgeClass($status) {
@@ -158,14 +162,40 @@ $(document).ready(function() {
         responsive: true,
         dom: '<"top"Bf>rt<"bottom"lip><"clear">',
         buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print'
+            {
+                extend: 'collection',
+                text: 'Export',
+                buttons: [
+                    'copy',
+                    'excel',
+                    'csv',
+                    'pdf',
+                    'print'
+                ]
+            }
         ],
         columnDefs: [
             { responsivePriority: 1, targets: 0 }, // Invoice #
             { responsivePriority: 2, targets: -1 }, // Actions
             { responsivePriority: 3, targets: 2 }, // Customer
-            { responsivePriority: 4, targets: 3 }  // Product Name
-        ]
+            { responsivePriority: 4, targets: 3 }, // Products
+            { 
+                targets: [3, 4, 5, 6], // Products, Total, Payment, Status
+                render: function(data, type, row) {
+                    if (type === 'display' && data.length > 50) {
+                        return data.substr(0, 50) + '...';
+                    }
+                    return data;
+                }
+            }
+        ],
+        language: {
+            search: "Search sales:",
+            paginate: {
+                previous: "<i class='ti ti-chevron-left'></i>",
+                next: "<i class='ti ti-chevron-right'></i>"
+            }
+        }
     });
 });  
 </script>
@@ -181,6 +211,20 @@ $(document).ready(function() {
     }
     #sales-table td {
         vertical-align: middle;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 4px;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+    }
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 4px;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+    }
+    .page-item.active .page-link {
+        background-color: #7367f0;
+        border-color: #7367f0;
     }
 </style>
 
