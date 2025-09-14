@@ -11,6 +11,38 @@ include('include/header.php');
 include('include/sidebar.php');
 include('include/topbar.php');
 
+// Get selected periods from request or use defaults
+$revenue_period = isset($_POST['revenue_period']) ? $_POST['revenue_period'] : 'last_6_months';
+$category_period = isset($_POST['category_period']) ? $_POST['category_period'] : 'last_3_months';
+$sales_period = isset($_POST['sales_period']) ? $_POST['sales_period'] : 'today';
+
+// Function to get sales data based on period
+function getSalesData($period, $conn) {
+    $query = "";
+    switch ($period) {
+        case 'today':
+            $query = "SELECT COUNT(*) as count, SUM(total) as amount FROM sales WHERE DATE(date) = CURDATE()";
+            break;
+        case 'this_week':
+            $query = "SELECT COUNT(*) as count, SUM(total) as amount FROM sales WHERE YEARWEEK(date, 1) = YEARWEEK(CURDATE(), 1)";
+            break;
+        case 'this_month':
+            $query = "SELECT COUNT(*) as count, SUM(total) as amount FROM sales WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE())";
+            break;
+        case 'last_6_months':
+            $query = "SELECT COUNT(*) as count, SUM(total) as amount FROM sales WHERE date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+            break;
+        default:
+            $query = "SELECT COUNT(*) as count, SUM(total) as amount FROM sales WHERE DATE(date) = CURDATE()";
+    }
+    
+    $result = mysqli_query($conn, $query);
+    return mysqli_fetch_assoc($result);
+}
+
+// Get sales data for the selected period
+$sales_data = getSalesData($sales_period, $conn);
+
 // Get dashboard statistics
 $stats = [];
 $queries = [
@@ -32,11 +64,31 @@ foreach ($queries as $key => $query) {
     }
 }
 
-// Get recent sales
+// Get recent sales based on selected period
 $recent_sales = [];
+$sales_where = "";
+
+switch ($sales_period) {
+    case 'today':
+        $sales_where = "WHERE DATE(s.date) = CURDATE()";
+        break;
+    case 'this_week':
+        $sales_where = "WHERE YEARWEEK(s.date, 1) = YEARWEEK(CURDATE(), 1)";
+        break;
+    case 'this_month':
+        $sales_where = "WHERE MONTH(s.date) = MONTH(CURDATE()) AND YEAR(s.date) = YEAR(CURDATE())";
+        break;
+    case 'last_6_months':
+        $sales_where = "WHERE s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        break;
+    default:
+        $sales_where = "WHERE DATE(s.date) = CURDATE()";
+}
+
 $sales_query = "SELECT s.id, s.invoice_number, s.date, s.total, c.customer_name, s.payment_status 
                 FROM sales s 
                 LEFT JOIN customers c ON s.customer_id = c.id 
+                $sales_where
                 ORDER BY s.date DESC 
                 LIMIT 5";
 $sales_result = mysqli_query($conn, $sales_query);
@@ -87,6 +139,82 @@ $low_stock_query = "
 $low_stock_result = mysqli_query($conn, $low_stock_query);
 while ($row = mysqli_fetch_assoc($low_stock_result)) {
     $low_stock_products[] = $row;
+}
+
+// NEW: Get revenue overview data based on selected period
+$revenue_data = [];
+$revenue_where = "";
+
+switch ($revenue_period) {
+    case 'today':
+        $revenue_where = "WHERE DATE(date) = CURDATE()";
+        $revenue_group = "DATE_FORMAT(date, '%Y-%m-%d %H:00')";
+        break;
+    case 'this_week':
+        $revenue_where = "WHERE date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+        $revenue_group = "DATE_FORMAT(date, '%Y-%m-%d')";
+        break;
+    case 'this_month':
+        $revenue_where = "WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE())";
+        $revenue_group = "DATE_FORMAT(date, '%Y-%m-%d')";
+        break;
+    case 'last_6_months':
+    default:
+        $revenue_where = "WHERE date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        $revenue_group = "DATE_FORMAT(date, '%Y-%m')";
+        break;
+}
+
+$revenue_query = "
+    SELECT 
+        $revenue_group as period,
+        SUM(total) as revenue,
+        COUNT(*) as transactions
+    FROM sales 
+    $revenue_where
+    GROUP BY period 
+    ORDER BY period DESC
+";
+$revenue_result = mysqli_query($conn, $revenue_query);
+while ($row = mysqli_fetch_assoc($revenue_result)) {
+    $revenue_data[] = $row;
+}
+
+// NEW: Get sales by category data based on selected period
+$category_where = "";
+
+switch ($category_period) {
+    case 'today':
+        $category_where = "AND s.date >= CURDATE()";
+        break;
+    case 'this_week':
+        $category_where = "AND s.date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+        break;
+    case 'this_month':
+        $category_where = "AND MONTH(s.date) = MONTH(CURDATE()) AND YEAR(s.date) = YEAR(CURDATE())";
+        break;
+    case 'last_3_months':
+    default:
+        $category_where = "AND s.date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+        break;
+}
+
+$category_sales = [];
+$category_query = "
+    SELECT 
+        p.category_name,
+        SUM(si.quantity * si.price) as total_sales,
+        COUNT(DISTINCT s.id) as order_count
+    FROM sale_items si
+    JOIN products p ON si.product_id = p.product_id
+    JOIN sales s ON si.sale_id = s.id
+    WHERE 1=1 $category_where
+    GROUP BY p.category_name
+    ORDER BY total_sales DESC
+";
+$category_result = mysqli_query($conn, $category_query);
+while ($row = mysqli_fetch_assoc($category_result)) {
+    $category_sales[] = $row;
 }
 ?>
 
@@ -139,92 +267,69 @@ while ($row = mysqli_fetch_assoc($low_stock_result)) {
                 </div>
             </div>
             
-            <!-- Today's Sales -->
-            <div class="col-span-12 xl:col-span-4 md:col-span-6">
-                <div class="card">
-                    <div class="card-header !pb-0 !border-b-0">
-                        <h5>Today's Sales</h5>
+<!-- [ Previous code remains the same ] -->
+
+<!-- Filterable Sales Card -->
+<div class="col-span-12 xl:col-span-4 md:col-span-6">
+    <div class="card">
+        <div class="card-header !pb-0 !border-b-0 d-flex justify-content-between align-items-center">
+            <h5>Sales Overview</h5>
+            <div>
+                <form method="POST" class="d-inline" id="salesFilterForm">
+                    <select name="sales_period" id="sales_period" class="form-select form-select-sm" onchange="document.getElementById('salesFilterForm').submit()">
+                        <option value="today" <?= $sales_period == 'today' ? 'selected' : '' ?>>Today</option>
+                        <option value="this_week" <?= $sales_period == 'this_week' ? 'selected' : '' ?>>This Week</option>
+                        <option value="this_month" <?= $sales_period == 'this_month' ? 'selected' : '' ?>>This Month</option>
+                        <option value="last_6_months" <?= $sales_period == 'last_6_months' ? 'selected' : '' ?>>Last 6 Months</option>
+                    </select>
+                    <!-- Preserve other filter selections when submitting -->
+                    <input type="hidden" name="revenue_period" value="<?= $revenue_period ?>">
+                    <input type="hidden" name="category_period" value="<?= $category_period ?>">
+                </form>
+            </div>
+        </div>
+        <div class="card card-social">
+            <div class="card-body border-b border-theme-border dark:border-themedark-border">
+                <div class="flex items-center justify-center">
+                    <div class="shrink-0">
+                        <i class="ti ti-currency-dollar fs-4 text-primary text-primary-500 text-[36px]"></i>
                     </div>
-                    <div class="card card-social">
-                        <div class="card-body border-b border-theme-border dark:border-themedark-border">
-                            <div class="flex items-center justify-center">
-                                <div class="shrink-0">
-                                    <i class="ti ti-currency-dollar fs-4 text-primary text-primary-500 text-[36px]"></i>
-                                </div>
-                                <div class="grow ltr:text-right rtl:text-left">
-                                    <h3 class="mb-2">$ <?= number_format($stats['today_sales']['amount'] ?? 0, 2) ?></h3>
-                                    <h5 class="text-success-500 mb-0">
-                                        <i class="ti ti-clock me-1"></i>    
-                                        <?= $stats['today_sales']['count'] ?? 0 ?>  
-                                        <span class="text-muted">today</span>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                                <div class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar" style="width: 50%"></div>
-                            </div>
-                        </div>
+                    <div class="grow ltr:text-right rtl:text-left">
+                        <?php
+                        $label = "today";
+                        switch ($sales_period) {
+                            case 'today':
+                                $label = "today";
+                                break;
+                            case 'this_week':
+                                $label = "this week";
+                                break;
+                            case 'this_month':
+                                $label = "this month";
+                                break;
+                            case 'last_6_months':
+                                $label = "last 6 months";
+                                break;
+                        }
+                        ?>
+                        <h3 class="mb-2">$ <?= number_format($sales_data['amount'] ?? 0, 2) ?></h3>
+                        <h5 class="text-success-500 mb-0">
+                            <i class="ti ti-clock me-1"></i>    
+                            <?= $sales_data['count'] ?? 0 ?>  
+                            <span class="text-muted"><?= $label ?></span>
+                        </h5>
                     </div>
                 </div>
+                <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
+                    <div class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar" style="width: 50%"></div>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- [ Rest of the code remains the same ] -->
             
-            <!-- Monthly Sales -->
-            <div class="col-span-12 xl:col-span-4 md:col-span-6">
-                <div class="card">
-                    <div class="card-header !pb-0 !border-b-0">
-                        <h5>Monthly Sales</h5>
-                    </div>
-                    <div class="card card-social">
-                        <div class="card-body border-b border-theme-border dark:border-themedark-border">
-                            <div class="flex items-center justify-center">
-                                <div class="shrink-0">
-                                    <i class="ti ti-calendar-stats fs-4 text-info text-[36px]"></i>
-                                </div>
-                                <div class="grow ltr:text-right rtl:text-left">
-                                    <h3 class="mb-2">$ <?= number_format($stats['monthly_sales']['amount'] ?? 0, 2) ?></h3>
-                                    <h5 class="text-info-500 mb-0">
-                                        <i class="ti ti-calendar me-1"></i>    
-                                        <?= $stats['monthly_sales']['count'] ?? 0 ?>  
-                                        <span class="text-muted">this month</span>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                                <div class="bg-info-500 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar" style="width: 75%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Yearly Sales -->
-            <div class="col-span-12 xl:col-span-4 md:col-span-6">
-                <div class="card">
-                    <div class="card-header !pb-0 !border-b-0">
-                        <h5>Yearly Sales</h5>
-                    </div>
-                    <div class="card card-social">
-                        <div class="card-body border-b border-theme-border dark:border-themedark-border">
-                            <div class="flex items-center justify-center">
-                                <div class="shrink-0">
-                                    <i class="ti ti-chart-bar fs-4 text-warning text-[36px]"></i>
-                                </div>
-                                <div class="grow ltr:text-right rtl:text-left">
-                                    <h3 class="mb-2">$ <?= number_format($stats['yearly_sales']['amount'] ?? 0, 2) ?></h3>
-                                    <h5 class="text-warning-500 mb-0">
-                                        <i class="ti ti-calendar me-1"></i>    
-                                        <?= $stats['yearly_sales']['count'] ?? 0 ?>  
-                                        <span class="text-muted">this year</span>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                                <div class="bg-warning-500 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar" style="width: 50%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Customers -->
             <div class="col-span-12 xl:col-span-4 md:col-span-6">
@@ -281,6 +386,143 @@ while ($row = mysqli_fetch_assoc($low_stock_result)) {
                     </div>
                 </div>
             </div>
+
+<!-- NEW: Revenue Overview -->
+<div class="col-span-12 xl:col-span-8">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Revenue Overview</h5>
+            <div>
+                <form method="POST" class="d-inline" id="revenueFilterForm">
+                    <select name="revenue_period" id="revenue_period" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="today" <?= $revenue_period == 'today' ? 'selected' : '' ?>>Today</option>
+                        <option value="this_week" <?= $revenue_period == 'this_week' ? 'selected' : '' ?>>This Week</option>
+                        <option value="this_month" <?= $revenue_period == 'this_month' ? 'selected' : '' ?>>This Month</option>
+                        <option value="last_6_months" <?= $revenue_period == 'last_6_months' ? 'selected' : '' ?>>Last 6 Months</option>
+                    </select>
+                    <!-- Keep category period selection when submitting -->
+                    <input type="hidden" name="category_period" value="<?= $category_period ?>">
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <?php if (!empty($revenue_data)): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Revenue</th>
+                                <th>Transactions</th>
+                                <th>Average Order Value</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $prev_revenue = null;
+                            foreach ($revenue_data as $revenue): 
+                                // Format period based on selected time range
+                                $period_name = '';
+                                if ($revenue_period == 'today') {
+                                    $period_name = date('g A', strtotime($revenue['period']));
+                                } else if ($revenue_period == 'this_week' || $revenue_period == 'this_month') {
+                                    $period_name = date('M j', strtotime($revenue['period']));
+                                } else {
+                                    $period_name = date('F Y', strtotime($revenue['period'] . '-01'));
+                                }
+                                
+                                $avg_order = $revenue['transactions'] > 0 ? $revenue['revenue'] / $revenue['transactions'] : 0;
+                                
+                                // Calculate trend
+                                $trend_icon = 'ti-minus';
+                                $trend_class = 'text-muted';
+                                if ($prev_revenue !== null) {
+                                    if ($revenue['revenue'] > $prev_revenue) {
+                                        $trend_icon = 'ti-trending-up';
+                                        $trend_class = 'text-success';
+                                    } elseif ($revenue['revenue'] < $prev_revenue) {
+                                        $trend_icon = 'ti-trending-down';
+                                        $trend_class = 'text-danger';
+                                    }
+                                }
+                                $prev_revenue = $revenue['revenue'];
+                            ?>
+                            <tr>
+                                <td><?= $period_name ?></td>
+                                <td>$<?= number_format($revenue['revenue'], 2) ?></td>
+                                <td><?= $revenue['transactions'] ?></td>
+                                <td>$<?= number_format($avg_order, 2) ?></td>
+                                <td class="<?= $trend_class ?>">
+                                    <i class="ti <?= $trend_icon ?>"></i>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="text-center py-4">
+                    <i class="ti ti-chart-line text-muted text-4xl mb-2"></i>
+                    <p class="text-muted">No revenue data available</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- NEW: Sales by Category -->
+<div class="col-span-12 xl:col-span-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Sales by Category</h5>
+            <div>
+                <form method="POST" class="d-inline" id="categoryFilterForm">
+                    <select name="category_period" id="category_period" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="today" <?= $category_period == 'today' ? 'selected' : '' ?>>Today</option>
+                        <option value="this_week" <?= $category_period == 'this_week' ? 'selected' : '' ?>>This Week</option>
+                        <option value="this_month" <?= $category_period == 'this_month' ? 'selected' : '' ?>>This Month</option>
+                        <option value="last_3_months" <?= $category_period == 'last_3_months' ? 'selected' : '' ?>>Last 3 Months</option>
+                    </select>
+                    <!-- Keep revenue period selection when submitting -->
+                    <input type="hidden" name="revenue_period" value="<?= $revenue_period ?>">
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <?php if (!empty($category_sales)): ?>
+                <div class="mb-4" style="height: 250px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Sales</th>
+                                <th>Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($category_sales as $category): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($category['category_name']) ?></td>
+                                <td>$<?= number_format($category['total_sales'], 2) ?></td>
+                                <td><?= $category['order_count'] ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="text-center py-4">
+                    <i class="ti ti-chart-pie text-muted text-4xl mb-2"></i>
+                    <p class="text-muted">No category sales data available</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
 
             <!-- [ Low Stock Alert ] -->
             <div class="col-span-12 xl:col-span-4 md:col-span-6">
@@ -526,76 +768,66 @@ while ($row = mysqli_fetch_assoc($low_stock_result)) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 $(document).ready(function() {
-    // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(salesCtx, {
-        type: 'line',
+    // NEW: Category Sales Chart
+    <?php if (!empty($category_sales)): ?>
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryChart = new Chart(categoryCtx, {
+        type: 'pie',
         data: {
             labels: [
-                <?php 
-                // Generate labels for the last 7 days
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = date('Y-m-d', strtotime("-$i days"));
-                    echo "'" . date('M j', strtotime($date)) . "',";
-                }
-                ?>
+                <?php foreach ($category_sales as $category): ?>
+                    '<?= addslashes($category['category_name']) ?>',
+                <?php endforeach; ?>
             ],
             datasets: [{
-                label: 'Sales Amount',
                 data: [
-                    <?php
-                    // Initialize an array with 0 for each day
-                    $dailySales = array_fill(0, 7, 0);
-                    
-                    // Fill in actual sales data
-                    foreach ($weekly_sales as $sale) {
-                        $dayIndex = array_search(date('Y-m-d', strtotime($sale['day'])), 
-                            array_map(function($i) { 
-                                return date('Y-m-d', strtotime("-$i days")); 
-                            }, range(6, 0)));
-                        
-                        if ($dayIndex !== false) {
-                            $dailySales[$dayIndex] = $sale['amount'];
-                        }
-                    }
-                    
-                    // Output the data
-                    echo implode(',', $dailySales);
-                    ?>
+                    <?php foreach ($category_sales as $category): ?>
+                        <?= $category['total_sales'] ?>,
+                    <?php endforeach; ?>
                 ],
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(199, 199, 199, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)'
+                ],
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    position: 'right',
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return '$' + context.raw.toFixed(2);
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value;
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: $${value.toFixed(2)} (${percentage}%)`;
                         }
                     }
                 }
             }
         }
     });
+    <?php endif; ?>
 }); 
 </script>
 
@@ -608,6 +840,15 @@ $(document).ready(function() {
 .stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for filter dropdowns */
+.form-select-sm {
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
 }
 </style>
 

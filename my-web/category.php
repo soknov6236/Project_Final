@@ -52,13 +52,19 @@ include('include/topbar.php');
                                         <th>ID</th>
                                         <th>Category Name</th>
                                         <th>Description</th>
+                                        <th>Total Products</th>
                                         <th>Created At</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $sql = "SELECT * FROM category ORDER BY created_at DESC";
+                                    // Updated query to count products for each category
+                                    $sql = "SELECT c.*, COUNT(p.product_id) as total_products 
+                                            FROM category c 
+                                            LEFT JOIN products p ON c.category_id = p.category_id 
+                                            GROUP BY c.category_id 
+                                            ORDER BY c.created_at DESC";
                                     $result = mysqli_query($conn, $sql);
 
                                     while ($row = mysqli_fetch_assoc($result)) {
@@ -66,6 +72,7 @@ include('include/topbar.php');
                                                 <td>{$row['category_id']}</td>
                                                 <td>{$row['name']}</td>
                                                 <td>{$row['description']}</td>
+                                                <td>{$row['total_products']}</td>
                                                 <td>".date('M d, Y', strtotime($row['created_at']))."</td>
                                                 <td>
                                                     <a href='edit_category.php?id={$row['category_id']}' class='btn btn-sm btn-outline-primary'>

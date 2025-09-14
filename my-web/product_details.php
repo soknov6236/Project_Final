@@ -102,8 +102,8 @@ $imagePath = !empty($product['image']) ? 'uploads/products/' . $product['image']
                                 </div>
                                 
                                 <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h6>Quick Stats</h6>
+                                    <div class="card-header d-block p-3 bg-primary text-white">
+                                        <h6 class="text-white">Quick Stats</h6>
                                     </div>
                                     <div class="card-body">
                                         <ul class="list-group list-group-flush">
@@ -138,8 +138,8 @@ $imagePath = !empty($product['image']) ? 'uploads/products/' . $product['image']
                             
                             <div class="col-md-8">
                                 <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h6>Basic Information</h6>
+                                    <div class="card-header d-block p-3 bg-primary text-white">
+                                        <h6 class="text-white">Basic Information</h6>
                                     </div>
                                     <div class="card-body">
                                         <div class="row mb-3">
@@ -178,12 +178,14 @@ $imagePath = !empty($product['image']) ? 'uploads/products/' . $product['image']
                                                 <p class="form-control-static"><?php echo htmlspecialchars($product['gender']); ?></p>
                                             </div>
                                         </div>
+                                        
                                     </div>
+                                    
                                 </div>
                                 
                                 <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h6>Additional Details</h6>
+                                    <div class="card-header d-block p-3 bg-primary text-white">
+                                        <h6 class="text-white">Additional Details</h6>
                                     </div>
                                     <div class="card-body">
                                         <div class="row mb-3">

@@ -8,7 +8,6 @@ $users_pages = ['users.php', 'add_new_users.php', 'edit_users.php'];
 $customer_pages = ['customers.php', 'add_new_customer.php', 'edit_customer.php'];
 $supplier_pages = ['suppliers.php', 'add_new_suppliers.php', 'edit_supplier.php'];
 $category_pages = ['category.php', 'add_new_category.php', 'edit_category.php'];
-$purchase_pages = ['purchase.php', 'purchase_list.php', 'purchase_history.php'];
 $sale_pages = ['sales.php', 'sale_pos.php','add_new_sale.php', 'manage_sale.php', 'view_sale.php', 'edit_sale.php'];
 $return_pages = ['returns.php', 'add_new_returns.php'];
 $report_pages = ['reports/users.php', 'reports/customers.php', 'reports/suppliers.php', 'reports/categories.php', 'reports/products.php', 'reports/sales.php', 'reports/returns.php'];
@@ -19,7 +18,6 @@ $is_users_page = in_array($current_page, $users_pages) || str_contains($current_
 $is_customer_page = in_array($current_page, $customer_pages) || str_contains($current_page, 'customer');
 $is_supplier_page = in_array($current_page, $supplier_pages) || str_contains($current_page, 'supplier');
 $is_category_page = in_array($current_page, $category_pages) || str_contains($current_page, 'category');
-$is_purchase_page = in_array($current_page, $purchase_pages) || str_contains($current_page, 'purchase');
 $is_sale_page = in_array($current_page, $sale_pages) || str_contains($current_page, 'sale');
 $is_return_page = in_array($current_page, $return_pages) || str_contains($current_page, 'return');
 $is_report_page = in_array($current_page, $report_pages) || str_contains($current_page, 'report');
@@ -128,28 +126,11 @@ $is_report_page = in_array($current_page, $report_pages) || str_contains($curren
                     <li class="pc-item <?= $current_page == 'products.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="products.php">Product List</a>
                     </li>
-                    <li class="pc-item <?= $current_page == 'add_new_products.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="add_new_products.php">Add Product</a>
-                    </li>
                     <li class="pc-item <?= $current_page == 'products_stock.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="products_stock.php">Product Stock</a>
                     </li>
-                </ul>
-            </li>
-            
-            <!-- Purchase -->
-            <li class="pc-item pc-hasmenu <?= $is_purchase_page ? 'active pc-trigger' : '' ?>">
-                <a href="#!" class="pc-link">
-                    <span class="pc-micon"><i data-feather="package"></i></span>
-                    <span class="pc-mtext">Purchase</span>
-                    <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
-                </a>
-                <ul class="pc-submenu" style="<?= $is_purchase_page ? 'display: block;' : '' ?>">
-                    <li class="pc-item <?= $current_page == 'purchase.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="purchase.php">New Purchase</a>
-                    </li>
-                    <li class="pc-item <?= $current_page == 'purchase_list.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="purchase_list.php">Purchase List</a>
+                    <li class="pc-item <?= $current_page == 'add_new_products.php' ? 'active' : '' ?>">
+                        <a class="pc-link" href="add_new_products.php">Add Product</a>
                     </li>
                 </ul>
             </li>
@@ -162,18 +143,18 @@ $is_report_page = in_array($current_page, $report_pages) || str_contains($curren
                     <span class="pc-arrow"><i class="ti ti-chevron-right"></i></span>
                 </a>
                 <ul class="pc-submenu" style="<?= $is_sale_page ? 'display: block;' : '' ?>">
-                    <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="add_new_sale.php">Add Sale</a>
-                    </li>
-                    <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
-                        <a class="pc-link" href="sale_pos.php">POS</a>
-                    </li>
                     <li class="pc-item <?= $current_page == 'sales.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="sales.php">Sale List</a>
                     </li>
                     <li class="pc-item <?= $current_page == 'manage_sale.php' ? 'active' : '' ?>">
                         <a class="pc-link" href="manage_sale.php">Manage Sales</a>
                     </li>
+                    <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
+                        <a class="pc-link" href="add_new_sale.php">Add Sale</a>
+                    </li>
+                    <li class="pc-item <?= $current_page == 'sale_pos.php' ? 'active' : '' ?>">
+                        <a class="pc-link" href="sale_pos.php">POS</a>
+                    </li>                    
                 </ul>
             </li>
             

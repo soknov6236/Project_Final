@@ -200,20 +200,26 @@ $customers_result = mysqli_query($conn, $customers_query);
 <div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newCustomerModalLabel">Add New Customer</h5>
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white" id="newCustomerModalLabel">Add New Customer</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="newCustomerForm">
                     <div class="alert alert-danger d-none" id="customerErrorMsg"></div>
-                    <div class="mb-3">
-                        <label for="customerName" class="form-label">Customer Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="customerName" name="customer_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="customerEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="customerEmail" name="email">
+                    <div class="row">
+                        <div class="col-md-6">                    
+                            <div class="mb-3">
+                                <label for="customerName" class="form-label">Customer Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="customerName" name="customer_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customerEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="customerEmail" name="email">
+                            </div>                       
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="customerPhone" class="form-label">Phone</label>
@@ -221,7 +227,7 @@ $customers_result = mysqli_query($conn, $customers_query);
                     </div>
                     <div class="mb-3">
                         <label for="customerAddress" class="form-label">Address</label>
-                        <textarea class="form-control" id="customerAddress" name="address" rows="3"></textarea>
+                        <textarea class="form-control" id="customerAddress" name="address" rows="2"></textarea>
                     </div>
                 </form>
             </div>
@@ -246,7 +252,7 @@ $customers_result = mysqli_query($conn, $customers_query);
                     <div class="col-md-4 text-center">
                         <img id="detailProductImage" src="" class="img-fluid rounded" alt="Product Image" style="max-height: 200px;">
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <h4 id="detailProductName"></h4>
                         <p class="text-muted" id="detailProductCode"></p>
                         
@@ -275,9 +281,9 @@ $customers_result = mysqli_query($conn, $customers_query);
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="addFromDetails">Add to Sale</button>
+            <div class="modal-footer justify-content-left gap-3 mt-4 pt-3">                
+                <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary px-4 py-2" id="addFromDetails">Add to Sale</button>
             </div>
         </div>
     </div>
